@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block title %}
+History
+{% endblock %}
+
+{% block main %}
+<table>
+    <tr>
+        <th>Transaction Number</th>
+        <th>Security Name</th>
+        <th>Price</th>
+        <th>Number of Shares</th>
+        <th>Transaction Date</th>
+    </tr>
+    {% for transaction in transactions %}
+    <tr>
+        <td>{{ transaction[0] }}</td>
+        <td>{{ lookup(transaction[2])["name"] }}</td>
+        <td>{{ usd(transaction[3]) }}</td>
+        <td>{{ transaction[4] }}</td>
+        <td>{{ transaction[5] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

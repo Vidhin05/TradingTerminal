@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Leaderboard
+{% endblock %}
+
+{% block main %}
+<table>
+    <tr>
+        <th>
+            User
+        </th>
+        <th>
+            Cash
+        </th>
+        <th>
+            Assets
+        </th>
+        <th>
+            Net Worth
+        </th>
+    </tr>
+    {% for user in leaders %}
+    <tr>
+        <td>{{ user[0] }}</td>
+        <td>{{ usd(user[1]) }}</td>
+        <td>{{ usd(user[2]) }}</td>
+        <td>{{ usd(user[1] + user[2]) }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
