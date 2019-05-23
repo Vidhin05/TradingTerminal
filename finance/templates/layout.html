@@ -16,7 +16,7 @@
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-    <title>Brennan's Stock Market: {% block title %}{% endblock %}</title>
+    <title>DAIICT Stock Market: {% block title %}{% endblock %}</title>
 
 </head>
 
@@ -34,10 +34,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="{{ url_for('index') }}"><span class="blue">B</span><span
-                        class="red">r</span><span class="yellow">e</span><span class="orange">n</span><span
-                        class="blue">n</span><span class="red">a</span><span class="yellow">n </span><span
-                        class="green">$</span> <span class="red">Finance</span></a>
+                <a class="navbar-brand" href="{{ url_for('index') }}"><span class="red">DAIICT</span><span class="red">STOCKMARKET</span></a>
             </div>
             <div class="collapse navbar-collapse" id="navbar">
                 {% if session.user_id %}
