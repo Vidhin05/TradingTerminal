@@ -159,8 +159,8 @@ def quote():
         ## here we can display our local GBM simulation
         df = pd.read_csv('TCS.NS.csv')
 
-        fig = plt.plot(df['Date'],df['Adj Close'])
-        fig.savefig('stock_plot.png')
+        plt.plot(df['Date'],df['Adj Close'])
+        plt.savefig('stock_plot.png', bbox_inches='tight')
         return render_template("quoted.html", stock=stock)
 
 @app.route("/register", methods=["GET", "POST"])
