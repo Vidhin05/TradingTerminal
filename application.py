@@ -160,6 +160,7 @@ def quote():
         df = pd.read_csv('TCS.NS.csv')
 
         plt.plot(df['Date'],df['Adj Close'])
+        fig.savefig('stock_plot.png')
         return render_template("quoted.html", stock=stock)
 
 @app.route("/register", methods=["GET", "POST"])
