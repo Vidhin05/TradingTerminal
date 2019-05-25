@@ -1,6 +1,9 @@
 import sqlite3
 import re
 import time
+from base64 import b64encode
+from io import BytesIO
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from flask_session import Session
@@ -151,14 +154,18 @@ def logout():
 @app.route("/quote", methods=["GET"])
 @login_required
 def quote():
-    """Get stock quote."""
     if request.method == "GET":
         ## here we can display our local GBM simulation
         df = pd.read_csv('TCS.NS.csv')
+        output = io.BytesIO()
 
         plt.plot(df['Date'],df['Adj Close'])
-        plt.savefig('stock.png', bbox_inches='tight')
-        return render_template("quoted.html")
+        f= plt.figure()
+        canvas = FigureCanvas(f)
+        canvas.print_png(output)
+        plot_data= b64encode(output.getvalue()).decode('ascii')
+        output.seek(0)
+        return render_template("quoted.html", url=plot_data)
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
