@@ -154,6 +154,8 @@ def quote():
     if request.method == "GET":
         return render_template("quote.html")
     elif request.method == "POST":
+
+        ## here we can display our local GBM simulation
         if not request.form.get("stock-symbol"):
             return apology("Error", "Forgot to enter a stock")
         stock = lookup(request.form.get("stock-symbol"))
@@ -243,10 +245,15 @@ def sell():
             return apology("ERROR", "You don't own that much!")
         return redirect(url_for("index"))
 
-app.route("/option")
+@app.route("/options", methods=["GET", "POST"])
 @login_required
-def option():
-    return apology("ERROR", "In developement")
+def options():
+    if request.method == "GET":
+        return apology("Error", "Under Maintainence")
+        #return render_template("options.html")
+    elif request.method == "POST":
+        return apology("Error", "Under Maintainence")
+
 
 if __name__ == "__main__":
     app.run(debug=False)
