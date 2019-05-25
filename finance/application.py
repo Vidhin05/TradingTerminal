@@ -243,5 +243,10 @@ def sell():
             return apology("ERROR", "You don't own that much!")
         return redirect(url_for("index"))
 
+app.route("/option")
+@login_required
+def option():
+    return apology("ERROR", "In developement")
+
 if __name__ == "__main__":
     app.run(debug=False)
