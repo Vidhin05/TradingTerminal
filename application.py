@@ -6,7 +6,8 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from flask_session import Session
 from passlib.hash import sha256_crypt
 from tempfile import gettempdir
-
+import pandas as pd
+import matplotlib.pyplot as plt
 from helpers import *
 
 # configure application
@@ -156,11 +157,9 @@ def quote():
     elif request.method == "POST":
 
         ## here we can display our local GBM simulation
-        if not request.form.get("stock-symbol"):
-            return apology("Error", "Forgot to enter a stock")
-        stock = lookup(request.form.get("stock-symbol"))
-        if not stock:
-            return apology("ERROR", "INVALID STOCK")
+        df = pd.read_csv('TCS.NS.csv')
+
+        plt.plot(df['Date'],df['Adj Close'])
         return render_template("quoted.html", stock=stock)
 
 @app.route("/register", methods=["GET", "POST"])
