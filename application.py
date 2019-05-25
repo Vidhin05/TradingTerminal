@@ -159,7 +159,7 @@ def quote():
         ## here we can display our local GBM simulation
         df = pd.read_csv('TCS.NS.csv')
 
-        plt.plot(df['Date'],df['Adj Close'])
+        fig = plt.plot(df['Date'],df['Adj Close'])
         fig.savefig('stock_plot.png')
         return render_template("quoted.html", stock=stock)
 
