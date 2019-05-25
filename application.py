@@ -148,17 +148,17 @@ def logout():
     # redirect user to login form
     return redirect(url_for("login"))
 
-@app.route("/quote", methods=["GET", "POST"])
+@app.route("/quote", methods=["GET"])
 @login_required
 def quote():
     """Get stock quote."""
-    if request.method == "POST":
+    if request.method == "GET":
         ## here we can display our local GBM simulation
         df = pd.read_csv('TCS.NS.csv')
 
         plt.plot(df['Date'],df['Adj Close'])
-        plt.savefig('stock_plot.png', bbox_inches='tight')
-        return render_template("quoted.html", stock=stock)
+        plt.savefig('stock.png', bbox_inches='tight')
+        return render_template("quoted.html")
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
