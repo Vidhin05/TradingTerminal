@@ -152,10 +152,7 @@ def logout():
 @login_required
 def quote():
     """Get stock quote."""
-    if request.method == "GET":
-        return render_template("quote.html")
-    elif request.method == "POST":
-
+    if request.method == "POST":
         ## here we can display our local GBM simulation
         df = pd.read_csv('TCS.NS.csv')
 
