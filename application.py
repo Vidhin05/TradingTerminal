@@ -1,10 +1,6 @@
 import sqlite3
 import re
 import time
-from base64 import b64encode
-from io import BytesIO
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from flask_session import Session
 from passlib.hash import sha256_crypt
@@ -12,7 +8,11 @@ from tempfile import gettempdir
 import pandas as pd
 import matplotlib.pyplot as plt
 from helpers import *
+import io
+from matplotlib import style
+import base64
 
+%matplotlib inline
 # configure application
 app = Flask(__name__)
 
@@ -155,17 +155,17 @@ def logout():
 @login_required
 def quote():
     if request.method == "GET":
+        style.use('ggplot')
         ## here we can display our local GBM simulation
         df = pd.read_csv('TCS.NS.csv')
-        output = io.BytesIO()
-
+        img = io.BytesIO()
+        plt.xticks(rotation=90)
         plt.plot(df['Date'],df['Adj Close'])
-        f= plt.figure()
-        canvas = FigureCanvas(f)
-        canvas.print_png(output)
-        plot_data= b64encode(output.getvalue()).decode('ascii')
-        output.seek(0)
-        return render_template("quoted.html", url=plot_data)
+        plt.savefig(img, format='png')
+        img.seek(0)
+        graph_url = base64.b64encode(img.getvalue()).decode()
+        plt.close()
+        return render_template("quoted.html", url ='data:image/png;base64,{}'.format(graph_url))
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
