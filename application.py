@@ -12,7 +12,6 @@ import io
 from matplotlib import style
 import base64
 
-%matplotlib inline
 # configure application
 app = Flask(__name__)
 
