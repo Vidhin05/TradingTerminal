@@ -5,5 +5,22 @@ Options
 {% endblock %}
 
 {% block main %}
-
+<table>
+    <tr>
+        <th>Writer ID</th>
+        <th>Option Price quoted</th>
+        <th>Strike Price</th>
+        <th>Number of Shares</th>
+        <th>Transaction Date</th>
+    </tr>
+    {% for transaction in transactions %}
+    <tr>
+        <td>{{ transaction[0] }}</td>
+        <td>{{ transaction[1] }}</td>
+        <td>{{ transaction[2] }}</td>
+        <td>{{ transaction[3] }}</td>
+        <td>{{ transaction[4] }}</td>
+    </tr>
+    {% endfor %}
+</table>
 {% endblock %}
