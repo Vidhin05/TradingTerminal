@@ -252,12 +252,12 @@ def sell():
 @login_required
 def options():
     if request.method == "GET":
-        transactions = c.execute("SELECT * FROM option_available").fetchall()
+        
+        current_user = session["user_id"]
+        transactions = c.execute("SELECT * FROM option_post").fetchall()
         return render_template("options.html", transactions=transactions)
         
     elif request.method == "POST":
-        current_user = session["user_id"]
-        
         return apology("Error", "Under Maintainence")
 
 
