@@ -18,13 +18,6 @@ def gen_gbm(mu, sigma, n, t, S_0, seed):
     return s
 
 
-S_0 = 50
-t = 2
-n = 64
-mu = .15
-sigma = .4
-seed = 5
-gbm = gen_gbm(mu, sigma, n, t, S_0, seed)
-
+gbm = gen_gbm(S_0=50, t=2, n=64, mu=.15, sigma=.4, seed=5)
 plt.plot(gbm)
 plt.show()
