@@ -1,16 +1,18 @@
-import sqlite3
+import base64
+import io
 import re
+import sqlite3
 import time
+from tempfile import gettempdir
+
+import matplotlib.pyplot as plt
+import pandas as pd
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from flask_session import Session
-from passlib.hash import sha256_crypt
-from tempfile import gettempdir
-import pandas as pd
-import matplotlib.pyplot as plt
-from helpers import *
-import io
 from matplotlib import style
-import base64
+from passlib.hash import sha256_crypt
+
+from helpers import *
 
 # configure application
 app = Flask(__name__)
@@ -38,6 +40,7 @@ file = "finance.db"
 db = sqlite3.connect(file, check_same_thread=False)
 c = db.cursor()
 
+
 @app.route("/")
 @login_required
 def index():
@@ -50,7 +53,9 @@ def index():
         stocks_value += (stock[1] * lookup(stock[0])["price"])
     c.execute("UPDATE users SET assets = :assets WHERE id = :user_id", [stocks_value, current_user])
     db.commit()
-    return render_template("index.html", current_cash=current_cash, available=available, lookup=lookup, usd=usd, stocks_value=stocks_value)
+    return render_template("index.html", current_cash=current_cash, available=available, lookup=lookup, usd=usd,
+                           stocks_value=stocks_value)
+
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
@@ -89,6 +94,7 @@ def buy():
             return apology("ERROR", "INSUFFICIENT FUNDS")
         return redirect(url_for("index"))
 
+
 @app.route("/history")
 @login_required
 def history():
@@ -96,13 +102,16 @@ def history():
     current_user = session["user_id"]
     transactions = c.execute("SELECT * FROM transactions WHERE user_id = :user_id", [current_user]).fetchall()
     return render_template("history.html", transactions=transactions, lookup=lookup, usd=usd)
-#test
+
+
+# test
 
 @app.route("/leaderboard")
 @login_required
 def leaderboard():
     leaders = c.execute("SELECT username, cash, assets FROM users ORDER BY cash + assets DESC").fetchall()
     return render_template("leaderboard.html", leaders=leaders, usd=usd)
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -140,6 +149,7 @@ def login():
     else:
         return render_template("login.html")
 
+
 @app.route("/logout")
 def logout():
     """Log user out."""
@@ -150,6 +160,7 @@ def logout():
     # redirect user to login form
     return redirect(url_for("login"))
 
+
 @app.route("/quote", methods=["GET"])
 @login_required
 def quote():
@@ -159,12 +170,13 @@ def quote():
         df = pd.read_csv('TCS.NS.csv')
         img = io.BytesIO()
         plt.xticks(rotation=90)
-        plt.plot(df['Date'],df['Adj Close'])
+        plt.plot(df['Date'], df['Adj Close'])
         plt.savefig(img, format='png')
         img.seek(0)
         graph_url = base64.b64encode(img.getvalue()).decode()
         plt.close()
-        return render_template("quoted.html", url ='data:image/png;base64,{}'.format(graph_url))
+        return render_template("quoted.html", url='data:image/png;base64,{}'.format(graph_url))
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -179,7 +191,7 @@ def register():
     elif request.method == "POST":
         # check fields for completion
         if not request.form.get("username"):
-            return apology("Error","Forgot Username")
+            return apology("Error", "Forgot Username")
         elif not request.form.get("password"):
             return apology("Error", "Forgot Password")
         elif not request.form.get("password-confirm"):
@@ -196,7 +208,8 @@ def register():
                 db.commit()
 
                 # immediately log user in
-                session["user_id"] = c.execute("SELECT * FROM users WHERE username = :username", [username]).fetchall()[0][0]
+                session["user_id"] = \
+                    c.execute("SELECT * FROM users WHERE username = :username", [username]).fetchall()[0][0]
 
                 # send user to index
                 return redirect(url_for("index"))
@@ -207,12 +220,14 @@ def register():
         else:
             return apology("Passwords don't match")
 
+
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
     """Sell shares of stock."""
     if request.method == "GET":
-        available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = :user_id GROUP BY symbol", [session["user_id"]]).fetchall()
+        available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = :user_id GROUP BY symbol",
+                              [session["user_id"]]).fetchall()
         return render_template("sell.html")
     elif request.method == "POST":
         now = time.strftime("%c")
@@ -248,6 +263,7 @@ def sell():
             return apology("ERROR", "You don't own that much!")
         return redirect(url_for("index"))
 
+
 @app.route("/options", methods=["GET", "POST"])
 @login_required
 def options():
@@ -255,7 +271,7 @@ def options():
         current_user = session["user_id"]
         transactions = c.execute("SELECT * FROM option_post").fetchall()
         return render_template("options.html", transactions=transactions)
-        
+
     elif request.method == "POST":
         return apology("Error", "Under Maintainence")
 
