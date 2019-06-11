@@ -252,7 +252,6 @@ def sell():
 @login_required
 def options():
     if request.method == "GET":
-        
         current_user = session["user_id"]
         transactions = c.execute("SELECT * FROM option_post").fetchall()
         return render_template("options.html", transactions=transactions)
