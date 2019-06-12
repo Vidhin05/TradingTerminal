@@ -73,7 +73,7 @@ def login_required(f):
 
 
 def stock_hist(symbol):
-    ts = TimeSeries(key='XA3RBMF2EOR78ND2', output_format='pandas')
+    ts = TimeSeries(key='QRXN341LEPEKC3DN', output_format='pandas')
     # data, meta_data = ts.get_daily(symbol='AAPL')
     data, meta_data = ts.get_intraday(symbol='AAPL', interval='60min')
     data.to_csv("data.csv")
@@ -83,9 +83,9 @@ def stock_hist(symbol):
         "symbol": symbol
     }
 
-
+# XA3RBMF2EOR78ND2
 def lookup(symbol):
-    ts = TimeSeries(key='XA3RBMF2EOR78ND2')
+    ts = TimeSeries(key='QRXN341LEPEKC3DN')
     data = ts.get_quote_endpoint(symbol='AAPL')
     return {
         "name": symbol,
