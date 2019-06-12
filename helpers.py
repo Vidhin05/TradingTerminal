@@ -1,7 +1,7 @@
-import csv
-import urllib.request
 from functools import wraps
 
+import pandas as pd
+from alpha_vantage.timeseries import TimeSeries
 from flask import redirect, render_template, request, session, url_for
 
 
@@ -38,8 +38,8 @@ def login_required(f):
     return decorated_function
 
 
-def lookup(symbol):
-    """Look up quote for symbol."""
+"""def lookup(symbol):
+    # Look up quote for symbol.
 
     # reject symbol if it starts with caret
     if symbol.startswith("^"):
@@ -70,6 +70,22 @@ def lookup(symbol):
         "name": row[1],
         "price": price,
         "symbol": row[0].upper()
+    }"""
+
+
+def lookup(symbol):
+    ts = TimeSeries(key='XA3RBMF2EOR78ND2', output_format='pandas')
+    # data, meta_data = ts.get_daily(symbol='AAPL')
+    data, meta_data = ts.get_intraday(symbol='AAPL', interval='60min')
+    # data = data.reset_index()
+    # s = data['date'].apply(lambda x: x.split())
+    # data['Date'] = s.apply(lambda x: x[0])
+    # data['Time'] = s.apply(lambda x: x[1])
+    data.to_csv("data.csv")
+    return {
+        "name": symbol,
+        "price": data.iloc[-1]['4. close'],
+        "symbol": symbol
     }
 
 
