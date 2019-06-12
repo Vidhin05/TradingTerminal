@@ -13,6 +13,7 @@ from matplotlib import style
 from passlib.hash import sha256_crypt
 
 from helpers import *
+from stock_get_try import *
 
 # configure application
 app = Flask(__name__)
@@ -164,13 +165,16 @@ def logout():
 @app.route("/quote", methods=["GET"])
 @login_required
 def quote():
+    lookup2()
     if request.method == "GET":
         style.use('ggplot')
         ## here we can display our local GBM simulation
-        df = pd.read_csv('TCS.NS.csv')
+        # df = pd.read_csv('TCS.NS.csv')
+        df = pd.read_csv('data.csv')
         img = io.BytesIO()
         plt.xticks(rotation=90)
-        plt.plot(df['Date'], df['Adj Close'])
+        # plt.plot(df['Date'], df['Adj Close'])
+        plt.plot(df['date'], df['4. close'])
         plt.savefig(img, format='png')
         img.seek(0)
         graph_url = base64.b64encode(img.getvalue()).decode()
