@@ -1,4 +1,3 @@
-import base64
 import io
 import re
 import sqlite3
@@ -6,7 +5,8 @@ import time
 from tempfile import gettempdir
 
 import matplotlib.pyplot as plt
-from flask import Flask
+import pandas as pd
+from flask import Flask, send_file
 from flask_session import Session
 from matplotlib import style
 from passlib.hash import sha256_crypt
@@ -165,24 +165,22 @@ def logout():
 @app.route("/quote", methods=["GET"])
 @login_required
 def quote():
-    lookup('AAPL')
     if request.method == "GET":
-        style.use('ggplot')
-        # here we can display our local GBM simulation
-        # df = pd.read_csv('TCS.NS.csv')
-        df = pd.read_csv('data.csv', index_col='date')
-        img = io.BytesIO()
+        stock_hist('AAPL')
+        return render_template("quoted.html")
 
-        # plt.plot(df['Date'], df['Adj Close'])
-        # plt.plot(df['date'], df['4. close'])
-        df['4. close'].plot()
-        plt.xticks(rotation=90)
-        plt.savefig(img, format='png')
-        img.seek(0)
-        graph_url = base64.b64encode(img.getvalue()).decode()
-        # plt.close()
-        plt.show()
-        return render_template("quoted.html", url='data:image/png;base64,{}'.format(graph_url))
+
+@app.route("/fig")
+def fig():
+    style.use('ggplot')
+    df = pd.read_csv('data.csv', index_col='date')
+    img = io.BytesIO()
+    df['4. close'].plot()
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
 
 
 @app.route("/register", methods=["GET", "POST"])

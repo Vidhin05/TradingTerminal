@@ -1,3 +1,6 @@
+pandas
+matplotlib
+alpha_vantage
 Flask
 Flask-Session
 passlib

@@ -1,6 +1,5 @@
 from functools import wraps
 
-import pandas as pd
 from alpha_vantage.timeseries import TimeSeries
 from flask import redirect, render_template, request, session, url_for
 
@@ -73,20 +72,43 @@ def login_required(f):
     }"""
 
 
-def lookup(symbol):
+def stock_hist(symbol):
     ts = TimeSeries(key='XA3RBMF2EOR78ND2', output_format='pandas')
     # data, meta_data = ts.get_daily(symbol='AAPL')
     data, meta_data = ts.get_intraday(symbol='AAPL', interval='60min')
-    # data = data.reset_index()
-    # s = data['date'].apply(lambda x: x.split())
-    # data['Date'] = s.apply(lambda x: x[0])
-    # data['Time'] = s.apply(lambda x: x[1])
     data.to_csv("data.csv")
     return {
         "name": symbol,
         "price": data.iloc[-1]['4. close'],
         "symbol": symbol
     }
+
+
+def lookup(symbol):
+    ts = TimeSeries(key='XA3RBMF2EOR78ND2')
+    data = ts.get_quote_endpoint(symbol='AAPL')
+    return {
+        "name": symbol,
+        "price": float(data[0]['05. price']),
+        "symbol": symbol
+    }
+
+
+# def lookup(symbol):
+#     API_URL = "https://www.alphavantage.co/query"
+#     data = {
+#         "function": "GLOBAL_QUOTE",
+#         "symbol": "AAPL",
+#         "datatype": "json",
+#         "apikey": "XA3RBMF2EOR78ND2",
+#     }
+#     response = requests.get(API_URL, params=data)
+#     data = response.json()
+#     return {
+#         "name": symbol,
+#         "price": float(data['Global Quote']['05. price']),
+#         "symbol": symbol
+#     }
 
 
 def usd(value):
