@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Quote
+    Quoted
 {% endblock %}
 
 {% block main %}
@@ -11,4 +11,8 @@
     <h2>{{ stock.price }}</h2>
     <h1>Symbol</h1>
     <h2>{{ stock.symbol }}</h2>
-{% endblock %}quoted.html
+    <h1>Intraday TimeSeries {{ stock.name }}</h1>
+    <img src="{{ url_for('fig') }}" alt="Image Placeholder" >
+    <img src="{{ url_for('fig') }}" alt="Image Placeholder" >
+{% endblock %}
+<img src="{{ url_for('fig') }}" alt="Image Placeholder" >

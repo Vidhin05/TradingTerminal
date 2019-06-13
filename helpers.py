@@ -37,6 +37,13 @@ def login_required(f):
     return decorated_function
 
 
+def stock_hist(symbol):
+    stock = yf.Ticker(symbol)
+    hist = stock.history(period="1d", interval="15m")
+    hist.to_csv("data.csv")
+    return
+
+
 def lookup(symbol):
     """Look up quote for symbol."""
 
