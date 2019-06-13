@@ -1,3 +1,4 @@
+yfinance
 Flask
 Flask-Session
 passlib

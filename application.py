@@ -1,15 +1,10 @@
-import base64
-import io
 import re
 import sqlite3
 import time
 from tempfile import gettempdir
 
-import matplotlib.pyplot as plt
-import pandas as pd
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask
 from flask_session import Session
-from matplotlib import style
 from passlib.hash import sha256_crypt
 
 from helpers import *
@@ -161,9 +156,22 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route("/quote", methods=["GET"])
+@app.route("/quote", methods=["GET", "POST"])
 @login_required
 def quote():
+    """Get stock quote."""
+    if request.method == "GET":
+        return render_template("quote.html")
+    elif request.method == "POST":
+        if not request.form.get("stock-symbol"):
+            return apology("Error", "Forgot to enter a stock")
+        stock = lookup(request.form.get("stock-symbol"))
+        if not stock:
+            return apology("ERROR", "INVALID STOCK")
+        return render_template("quoted.html", stock=stock)
+
+
+"""def quote():
     if request.method == "GET":
         style.use('ggplot')
         ## here we can display our local GBM simulation
@@ -175,7 +183,7 @@ def quote():
         img.seek(0)
         graph_url = base64.b64encode(img.getvalue()).decode()
         plt.close()
-        return render_template("quoted.html", url='data:image/png;base64,{}'.format(graph_url))
+        return render_template("quoted.html", url='data:image/png;base64,{}'.format(graph_url))"""
 
 
 @app.route("/register", methods=["GET", "POST"])
