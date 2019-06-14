@@ -56,7 +56,7 @@ def index():
                            stocks_value=stocks_value)
 
 
-@app.route("/buy", methods=["GET", "POST"])
+@app.route("/buy/", methods=["GET", "POST"])
 @login_required
 def buy():
     current_user = session["user_id"]
@@ -94,7 +94,7 @@ def buy():
         return redirect(url_for("index"))
 
 
-@app.route("/history")
+@app.route("/history/")
 @login_required
 def history():
     """Show history of transactions."""
@@ -105,14 +105,14 @@ def history():
 
 # test
 
-@app.route("/leaderboard")
+@app.route("/leaderboard/")
 @login_required
 def leaderboard():
     leaders = c.execute("SELECT username, cash, assets FROM users ORDER BY cash + assets DESC").fetchall()
     return render_template("leaderboard.html", leaders=leaders, usd=usd)
 
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login/", methods=["GET", "POST"])
 def login():
     """Log user in."""
 
@@ -149,7 +149,7 @@ def login():
         return render_template("login.html")
 
 
-@app.route("/logout")
+@app.route("/logout/")
 def logout():
     """Log user out."""
 
@@ -160,7 +160,7 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route("/quote", methods=["GET", "POST"])
+@app.route("/quote/", methods=["GET", "POST"])
 @login_required
 def quote():
     """Get stock quote."""
@@ -186,7 +186,7 @@ def quote():
         return render_template("quoted.html", stock=stock, url='data:image/png;base64,{}'.format(graph_url))
 
 
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/register/", methods=["GET", "POST"])
 def register():
     """Register user."""
     username = request.form.get("username")
@@ -229,7 +229,7 @@ def register():
             return apology("Passwords don't match")
 
 
-@app.route("/sell", methods=["GET", "POST"])
+@app.route("/sell/", methods=["GET", "POST"])
 @login_required
 def sell():
     """Sell shares of stock."""
@@ -272,7 +272,7 @@ def sell():
         return redirect(url_for("index"))
 
 
-@app.route("/options", methods=["GET", "POST"])
+@app.route("/options/", methods=["GET", "POST"])
 @login_required
 def options():
     if request.method == "GET":

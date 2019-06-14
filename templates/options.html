@@ -1,40 +1,40 @@
 {% extends "layout.html" %}
 
 {% block title %}
-Options
+    Options
 {% endblock %}
 
 {% block main %}
-<table>
-    <tr>
-        <th>Option ID</th>
-        <th>Writer ID</th>
-        <th>Option Price quoted</th>
-        <th>Strike Price</th>
-        <th>Type</th>
-        <th>Number of Shares</th>
-    </tr>
-    {% for transaction in transactions %}
-    <tr>
-        <td>{{ transaction[6] }}</td>
-        <td>{{ transaction[0] }}</td>
-        <td>{{ transaction[2] }}</td>
-        <td>{{ transaction[1] }}</td>
-        <td>{{ transaction[3] }}</td>
-        <td>{{ transaction[4] }}</td>
-    </tr>
-    {% endfor %}
-</table>
+    <table>
+        <tr>
+            <th>Option ID</th>
+            <th>Writer ID</th>
+            <th>Option Price quoted</th>
+            <th>Strike Price</th>
+            <th>Type</th>
+            <th>Number of Shares</th>
+        </tr>
+        {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction[6] }}</td>
+                <td>{{ transaction[0] }}</td>
+                <td>{{ transaction[2] }}</td>
+                <td>{{ transaction[1] }}</td>
+                <td>{{ transaction[3] }}</td>
+                <td>{{ transaction[4] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
 
-<form action="{{ url_for('options') }}" method="post">
-    <fieldset>
-        <div class="form-group">
-            <input autocomplete="off" autofocus class="form-control" name="option-ID" placeholder="Option ID"
-                   type="text"/>
-        </div>
-        <div class="form-group">
-            <button class="btn btn-default" type="submit">Purchase</button>
-        </div>
-    </fieldset>
-</form>
+    <form action="{{ url_for('options') }}" method="post">
+        <fieldset>
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="option-ID" placeholder="Option ID"
+                       type="text"/>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-default" type="submit">Purchase</button>
+            </div>
+        </fieldset>
+    </form>
 {% endblock %}

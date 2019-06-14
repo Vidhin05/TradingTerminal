@@ -38,33 +38,33 @@
             </div>
             <div class="collapse navbar-collapse" id="navbar">
                 {% if session.user_id %}
-                <ul class="nav navbar-nav">
-                    <li><a href="{{ url_for('quote') }}">Quote</a></li>
-                    <li><a href="{{ url_for('buy') }}">Buy</a></li>
-                    <li><a href="{{ url_for('sell') }}">Sell</a></li>
-                    <li><a href="{{ url_for('history') }}">History</a></li>
-                    <li><a href="{{ url_for('leaderboard') }}">Leaderboard</a></li>
-                    <li><a href="{{ url_for('options') }}">Options</a></li>
-                </ul>
-                <ul class="nav navbar-nav navbar-right">
-                    <li><a href="{{ url_for('logout') }}">Log Out</a></li>
-                </ul>
+                    <ul class="nav navbar-nav">
+                        <li><a href="{{ url_for('quote') }}">Quote</a></li>
+                        <li><a href="{{ url_for('buy') }}">Buy</a></li>
+                        <li><a href="{{ url_for('sell') }}">Sell</a></li>
+                        <li><a href="{{ url_for('history') }}">History</a></li>
+                        <li><a href="{{ url_for('leaderboard') }}">Leaderboard</a></li>
+                        <li><a href="{{ url_for('options') }}">Options</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="{{ url_for('logout') }}">Log Out</a></li>
+                    </ul>
                 {% else %}
-                <ul class="nav navbar-nav navbar-right">
-                    <li><a href="{{ url_for('register') }}">Register</a></li>
-                    <li><a href="{{ url_for('logout') }}">Log In</a></li>
-                </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="{{ url_for('register') }}">Register</a></li>
+                        <li><a href="{{ url_for('logout') }}">Log In</a></li>
+                    </ul>
                 {% endif %}
             </div>
         </div>
     </nav>
 
     {% if get_flashed_messages() %}
-    <header>
-        <div class="alert alert-info" role="alert">
-            {{ get_flashed_messages() | join(" ") }}
-        </div>
-    </header>
+        <header>
+            <div class="alert alert-info" role="alert">
+                {{ get_flashed_messages() | join(" ") }}
+            </div>
+        </header>
     {% endif %}
 
     <main>
