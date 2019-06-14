@@ -10,7 +10,7 @@ from flask import Flask, send_file
 from flask_session import Session
 from matplotlib import style
 from passlib.hash import sha256_crypt
-
+import base64
 from helpers import *
 
 # configure application
@@ -170,16 +170,25 @@ def quote():
         if not request.form.get("stock-symbol"):
             return apology("Error", "Forgot to enter a stock")
         stock = lookup(request.form.get("stock-symbol"))
-        print(stock['symbol'])
-        print("HBH")
         stock_hist(stock['symbol'])
-        print("HAH")
+
+        style.use('ggplot')
+        df = pd.read_csv('data.csv', index_col='Datetime')
+        img = io.BytesIO()
+
+        df['Close'].plot()
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(img, format='png')
+        img.seek(0)
+        graph_url = base64.b64encode(img.getvalue()).decode()
+        plt.close()
         if not stock:
             return apology("ERROR", "INVALID STOCK")
-        return render_template("quoted.html", stock=stock)
+        return render_template("quoted.html", stock=stock, url ='data:image/png;base64,{}'.format(graph_url))
 
 
-@app.route("/fig")
+""""@app.route("/fig")
 def fig():
     print("in fig")
     style.use('ggplot')
@@ -190,7 +199,7 @@ def fig():
     plt.tight_layout()
     plt.savefig(img, format='png')
     img.seek(0)
-    return send_file(img, mimetype='image/png')
+    return send_file(img, mimetype='image/png')"""
 
 
 @app.route("/register", methods=["GET", "POST"])
