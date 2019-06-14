@@ -10,7 +10,7 @@ from flask import Flask, send_file
 from flask_session import Session
 from matplotlib import style
 from passlib.hash import sha256_crypt
-
+import base64
 from helpers import *
 
 # from stock_get_try import *
@@ -167,10 +167,21 @@ def logout():
 def quote():
     if request.method == "GET":
         stock_hist('AAPL')
-        return render_template("quoted.html")
+        style.use('ggplot')
+        df = pd.read_csv('data.csv', index_col='date')
+        img = io.BytesIO()
+
+        df['4. close'].plot()
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(img, format='png')
+        img.seek(0)
+        graph_url = base64.b64encode(img.getvalue()).decode()
+        plt.close()
+        return render_template("quoted.html", url ='data:image/png;base64,{}'.format(graph_url))
 
 
-@app.route("/fig")
+""""@app.route("/fig")
 def fig():
     style.use('ggplot')
     df = pd.read_csv('data.csv', index_col='date')
@@ -180,7 +191,7 @@ def fig():
     plt.tight_layout()
     plt.savefig(img, format='png')
     img.seek(0)
-    return send_file(img, mimetype='image/png')
+    return send_file(img, mimetype='image/png')"""
 
 
 @app.route("/register", methods=["GET", "POST"])

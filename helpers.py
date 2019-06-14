@@ -77,11 +77,7 @@ def stock_hist(symbol):
     # data, meta_data = ts.get_daily(symbol='AAPL')
     data, meta_data = ts.get_intraday(symbol='AAPL', interval='60min')
     data.to_csv("data.csv")
-    return {
-        "name": symbol,
-        "price": data.iloc[-1]['4. close'],
-        "symbol": symbol
-    }
+    return
 
 # XA3RBMF2EOR78ND2
 def lookup(symbol):
