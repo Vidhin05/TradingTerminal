@@ -1,3 +1,4 @@
+matplotlib
 yfinance
 Flask
 Flask-Session

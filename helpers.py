@@ -38,10 +38,7 @@ def login_required(f):
 
 
 def stock_hist(symbol):
-    stock = yf.Ticker(symbol)
-    hist = stock.history(period="1d", interval="15m")
-    hist.to_csv("data.csv")
-    return
+    return yf.Ticker(symbol).history(period="1d", interval="15m")
 
 
 def lookup(symbol):
@@ -56,18 +53,10 @@ def lookup(symbol):
         return None
 
     # query Yahoo for quote
-    # http://stackoverflow.com/a/21351911
     try:
         stock = yf.Ticker(symbol)
         stock_info = stock.info
 
-        # url = "http://download.finance.yahoo.com/d/quotes.csv?f=snl1&s={}".format(symbol)
-        # ## this url not working..
-        # # we need to replace this url with our list of GBM generated stock..
-        # ## in later updates we can perform on live stock market
-        # webpage = urllib.request.urlopen(url)
-        # datareader = csv.reader(webpage.read().decode("utf-8").splitlines())
-        # row = next(datareader)
     except:
         return None
 
