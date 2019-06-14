@@ -1,36 +1,36 @@
 {% extends "layout.html" %}
 
 {% block title %}
-Index
+    Index
 {% endblock %}
 
 {% block main %}
-<h1 class="cash">Cash: {{ usd(current_cash) }}</h1>
-<h1 class="cash">Assets: {{ usd(stocks_value) }}</h1>
-<table>
-    <tr>
-        <th>
-            Symbol
-        </th>
-        <th>
-            Security Name
-        </th>
-        <th>
-            Shares Available
-        </th>
-        <th>
-            Current Price
-        </th>
-    </tr>
-    {% for stock in available %}
-    {% if stock[1] > 0 %}
-    <tr>
-        <td>{{ stock[0] }}</td>
-        <td>{{ lookup(stock[0])["name"] }}</td>
-        <td>{{ stock[1] }}</td>
-        <td>{{ usd(lookup(stock[0])["price"]) }}</td>
-    </tr>
-    {% endif %}
-    {% endfor %}
-</table>
+    <h1 class="cash">Cash: {{ usd(current_cash) }}</h1>
+    <h1 class="cash">Assets: {{ usd(stocks_value) }}</h1>
+    <table>
+        <tr>
+            <th>
+                Symbol
+            </th>
+            <th>
+                Security Name
+            </th>
+            <th>
+                Shares Available
+            </th>
+            <th>
+                Current Price
+            </th>
+        </tr>
+        {% for stock in available %}
+            {% if stock[1] > 0 %}
+                <tr>
+                    <td>{{ stock[0] }}</td>
+                    <td>{{ lookup(stock[0])["name"] }}</td>
+                    <td>{{ stock[1] }}</td>
+                    <td>{{ usd(lookup(stock[0])["price"]) }}</td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
 {% endblock %}

@@ -1,5 +1,4 @@
-.container
-{
+.container {
     /* center contents */
     margin-left: auto;
     margin-right: auto;
@@ -7,8 +6,7 @@
 }
 
 /* colors for navbar */
-.navbar-default .navbar-brand .blue
-{
+.navbar-default .navbar-brand .blue {
     color: #537fbe;
 }
 
@@ -32,13 +30,11 @@ tr:nth-child(even) {
     background-color: aqua;
 }
 
-h2
-{
+h2 {
     color: #537fbe;
 }
 
-main .form-control
-{
+main .form-control {
     /* center form controls */
     display: inline-block;
 
@@ -46,14 +42,12 @@ main .form-control
     width: auto;
 }
 
-main img
-{
+main img {
     /* constrain images on small screens */
     max-width: 100%;
 }
 
-main td
-{
+main td {
     /* left-align tables' cells */
     text-align: left;
 }

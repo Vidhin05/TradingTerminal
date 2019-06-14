@@ -1,3 +1,4 @@
+import base64
 import io
 import re
 import sqlite3
@@ -5,15 +6,12 @@ import time
 from tempfile import gettempdir
 
 import matplotlib.pyplot as plt
-import pandas as pd
-from flask import Flask, send_file
+from flask import Flask
 from flask_session import Session
 from matplotlib import style
 from passlib.hash import sha256_crypt
-import base64
-from helpers import *
 
-# from stock_get_try import *
+from helpers import *
 
 # configure application
 app = Flask(__name__)
@@ -58,7 +56,7 @@ def index():
                            stocks_value=stocks_value)
 
 
-@app.route("/buy", methods=["GET", "POST"])
+@app.route("/buy/", methods=["GET", "POST"])
 @login_required
 def buy():
     current_user = session["user_id"]
@@ -96,7 +94,7 @@ def buy():
         return redirect(url_for("index"))
 
 
-@app.route("/history")
+@app.route("/history/")
 @login_required
 def history():
     """Show history of transactions."""
@@ -107,14 +105,14 @@ def history():
 
 # test
 
-@app.route("/leaderboard")
+@app.route("/leaderboard/")
 @login_required
 def leaderboard():
     leaders = c.execute("SELECT username, cash, assets FROM users ORDER BY cash + assets DESC").fetchall()
     return render_template("leaderboard.html", leaders=leaders, usd=usd)
 
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login/", methods=["GET", "POST"])
 def login():
     """Log user in."""
 
@@ -151,7 +149,7 @@ def login():
         return render_template("login.html")
 
 
-@app.route("/logout")
+@app.route("/logout/")
 def logout():
     """Log user out."""
 
@@ -162,15 +160,19 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route("/quote", methods=["GET"])
+@app.route("/quote/", methods=["GET", "POST"])
 @login_required
 def quote():
     if request.method == "GET":
-        stock_hist('AAPL')
-        style.use('ggplot')
-        df = pd.read_csv('data.csv', index_col='date')
-        img = io.BytesIO()
+        return render_template("quote.html")
+    elif request.method == "POST":
+        if not request.form.get("stock-symbol"):
+            return apology("Error", "Forgot to enter a stock")
+        stock = lookup(request.form.get("stock-symbol"))
+        df = stock_hist(stock['symbol'])
 
+        style.use('ggplot')
+        img = io.BytesIO()
         df['4. close'].plot()
         plt.xticks(rotation=45)
         plt.tight_layout()
@@ -178,23 +180,12 @@ def quote():
         img.seek(0)
         graph_url = base64.b64encode(img.getvalue()).decode()
         plt.close()
-        return render_template("quoted.html", url ='data:image/png;base64,{}'.format(graph_url))
+        if not stock:
+            return apology("ERROR", "INVALID STOCK")
+        return render_template("quoted.html", stock=stock, url='data:image/png;base64,{}'.format(graph_url))
 
 
-""""@app.route("/fig")
-def fig():
-    style.use('ggplot')
-    df = pd.read_csv('data.csv', index_col='date')
-    img = io.BytesIO()
-    df['4. close'].plot()
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    return send_file(img, mimetype='image/png')"""
-
-
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/register/", methods=["GET", "POST"])
 def register():
     """Register user."""
     username = request.form.get("username")
@@ -237,7 +228,7 @@ def register():
             return apology("Passwords don't match")
 
 
-@app.route("/sell", methods=["GET", "POST"])
+@app.route("/sell/", methods=["GET", "POST"])
 @login_required
 def sell():
     """Sell shares of stock."""
@@ -280,7 +271,7 @@ def sell():
         return redirect(url_for("index"))
 
 
-@app.route("/options", methods=["GET", "POST"])
+@app.route("/options/", methods=["GET", "POST"])
 @login_required
 def options():
     if request.method == "GET":
