@@ -46,7 +46,7 @@ def stock_hist(symbol):
 
 # XA3RBMF2EOR78ND2
 def lookup(symbol):
-    ts = TimeSeries(key='QRXN341LEPEKC3DN')
+    ts = TimeSeries(key='XA3RBMF2EOR78ND2')
     data = ts.get_quote_endpoint(symbol=symbol)
     return {
         "name": symbol,
