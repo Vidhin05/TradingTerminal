@@ -209,7 +209,6 @@ def register():
         if password == password_confirm:
             # encrypt password
             hashed = sha256_crypt.encrypt(password)
-            username = re.sub(r'\W+', '', username.lower())
             try:
                 # send user details to database
                 c.execute("INSERT INTO users(username, hash) VALUES(:username, :hash)", [username, hashed])
