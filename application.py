@@ -291,31 +291,27 @@ def options():
         if not option_id:
             return apology("ERROR", "FORGOT OPTION ID")
         writer_id, strike_price, option_price, option_type, num_shares, option_time, option_id = \
-            c.execute("SELECT * FROM option_post WHERE `Option-ID` = :option_id", [option_id]).fetchall()[0]
+            c.execute("SELECT * FROM option_post WHERE option-id = :option_id", [option_id]).fetchall()[0]
 
         # stock_info = lookup(stock_symbol)
         # if not stock_info:
         #     return apology("ERROR", "INVALID STOCK")
 
         transaction_cost = \
-            c.execute("SELECT [option price] FROM option_post WHERE [Option-ID] = :CURRENT_OPTION",
-                      [option_id]).fetchall()[
-                0][0]
-        transaction_cost = \
-            c.execute("SELECT [option price] FROM option_post WHERE [Option-ID] = :CURRENT_OPTION",
-                      [option_id]).fetchall()[
-                0][0]
+            c.execute("SELECT option_price FROM option_post WHERE option_id = :CURRENT_OPTION",
+                      [option_id]).fetchall()[0][0]
+        
         # transaction_cost = stock_info["price"] * stock_quantity
         if transaction_cost <= current_cash:
             current_cash -= transaction_cost
             c.execute("UPDATE users SET cash = :cash WHERE id = :id", [current_cash, current_user])
 
             c.execute(
-                "INSERT INTO option_transaction(writer_id, holder_id, `option price`, `strike price`, `type`, num_of_shares, `time`, `Option-ID`)"
-                "VALUES(:writer_id, :holder_id, :option_price, strike_price, :type, :num_of_shares, :time, :Option-ID)",
-                [writer_id, current_user, option_price, strike_price, option_type, num_shares, now, option_id])
+                "INSERT INTO option_transaction(writer_id, option_price, strike_price, option_type, num_of_shares, transaction_date, option_id, holder_id)"
+                "VALUES(:writer_id, :option_price, strike_price, :type, :num_of_shares, :time, :Option-ID, :holder_id)",
+                [writer_id option_price, strike_price, option_type, num_shares, now, option_id, current_user])
 
-            c.execute("DELETE FROM option_post WHERE Option-ID=:option_id", [option_id])
+            c.execute("DELETE FROM option_post WHERE option_id=:option_id", [option_id])
             db.commit()
             print("Transaction sent.")
         else:
