@@ -99,7 +99,12 @@ def history():
     """Show history of transactions."""
     current_user = session["user_id"]
     transactions = c.execute("SELECT * FROM transactions WHERE user_id = :user_id", [current_user]).fetchall()
-    return render_template("history.html", transactions=transactions, lookup=lookup, usd=usd)
+    option_transactions = c.execute("SELECT * FROM option_transactions WHERE writer_id = :user_id",
+                                    [current_user]).fetchall()
+    option_transactions += c.execute("SELECT * FROM option_transactions WHERE holder_id = :user_id",
+                                     [current_user]).fetchall()
+    return render_template("history.html", transactions=transactions, option_transactions=option_transactions,
+                           lookup=lookup, usd=usd)
 
 
 # test
@@ -281,27 +286,36 @@ def options():
 
     elif request.method == "POST":
         now = time.strftime("%c")
-        optionID = request.form.get("option-ID")
-        try:
-            stock_quantity = int(request.form.get("stock-quantity"))
-        except ValueError:
-            return apology("ERROR", "ENTER QUANTITY IN WHOLE NUMBERS ONLY")
+        option_id = request.form.get("option-ID")
 
-        if not stock_symbol:
-            return apology("ERROR", "FORGOT STOCK SYMBOL")
-        elif not stock_quantity:
-            return apology("ERROR", "FORGOT DESIRED QUANTITY")
+        if not option_id:
+            return apology("ERROR", "FORGOT OPTION ID")
+        writer_id, strike_price, option_price, option_type, num_shares, option_time, option_id = \
+            c.execute("SELECT * FROM option_post WHERE `Option-ID` = :option_id", [option_id]).fetchall()[0]
 
-        stock_info = lookup(stock_symbol)
-        if not stock_info:
-            return apology("ERROR", "INVALID STOCK")
-        transaction_cost = stock_info["price"] * stock_quantity
+        # stock_info = lookup(stock_symbol)
+        # if not stock_info:
+        #     return apology("ERROR", "INVALID STOCK")
+
+        transaction_cost = \
+            c.execute("SELECT [option price] FROM option_post WHERE [Option-ID] = :CURRENT_OPTION",
+                      [option_id]).fetchall()[
+                0][0]
+        transaction_cost = \
+            c.execute("SELECT [option price] FROM option_post WHERE [Option-ID] = :CURRENT_OPTION",
+                      [option_id]).fetchall()[
+                0][0]
+        # transaction_cost = stock_info["price"] * stock_quantity
         if transaction_cost <= current_cash:
             current_cash -= transaction_cost
             c.execute("UPDATE users SET cash = :cash WHERE id = :id", [current_cash, current_user])
-            c.execute("INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
-                      "VALUES(:user_id, :symbol, :price, :quantity, :transaction_date)",
-                      [current_user, stock_info["symbol"], stock_info["price"], stock_quantity, now])
+
+            c.execute(
+                "INSERT INTO option_transaction(writer_id, holder_id, `option price`, `strike price`, `type`, num_of_shares, `time`, `Option-ID`)"
+                "VALUES(:writer_id, :holder_id, :option_price, strike_price, :type, :num_of_shares, :time, :Option-ID)",
+                [writer_id, current_user, option_price, strike_price, option_type, num_shares, now, option_id])
+
+            c.execute("DELETE FROM option_post WHERE Option-ID=:option_id", [option_id])
             db.commit()
             print("Transaction sent.")
         else:
