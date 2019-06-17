@@ -273,13 +273,43 @@ def sell():
 @app.route("/options/", methods=["GET", "POST"])
 @login_required
 def options():
+    current_user = session["user_id"]
+    current_cash = c.execute("SELECT cash FROM users WHERE id = :CURRENT_USER", [current_user]).fetchall()[0][0]
     if request.method == "GET":
-        current_user = session["user_id"]
         transactions = c.execute("SELECT * FROM option_post").fetchall()
         return render_template("options.html", transactions=transactions)
 
     elif request.method == "POST":
         return apology("Error", "Under Maintainence")
+
+    elif request.method == "POST":
+        now = time.strftime("%c")
+        optionID = request.form.get("option-ID")
+        try:
+            stock_quantity = int(request.form.get("stock-quantity"))
+        except ValueError:
+            return apology("ERROR", "ENTER QUANTITY IN WHOLE NUMBERS ONLY")
+
+        if not stock_symbol:
+            return apology("ERROR", "FORGOT STOCK SYMBOL")
+        elif not stock_quantity:
+            return apology("ERROR", "FORGOT DESIRED QUANTITY")
+
+        stock_info = lookup(stock_symbol)
+        if not stock_info:
+            return apology("ERROR", "INVALID STOCK")
+        transaction_cost = stock_info["price"] * stock_quantity
+        if transaction_cost <= current_cash:
+            current_cash -= transaction_cost
+            c.execute("UPDATE users SET cash = :cash WHERE id = :id", [current_cash, current_user])
+            c.execute("INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
+                      "VALUES(:user_id, :symbol, :price, :quantity, :transaction_date)",
+                      [current_user, stock_info["symbol"], stock_info["price"], stock_quantity, now])
+            db.commit()
+            print("Transaction sent.")
+        else:
+            return apology("ERROR", "INSUFFICIENT FUNDS")
+        return redirect(url_for("index"))
 
 
 if __name__ == "__main__":
