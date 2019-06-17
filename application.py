@@ -280,9 +280,6 @@ def options():
         return render_template("options.html", transactions=transactions)
 
     elif request.method == "POST":
-        return apology("Error", "Under Maintainence")
-
-    elif request.method == "POST":
         now = time.strftime("%c")
         optionID = request.form.get("option-ID")
         try:

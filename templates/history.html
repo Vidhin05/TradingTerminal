@@ -23,4 +23,25 @@ History
     </tr>
     {% endfor %}
 </table>
+ <table>
+        <tr>
+            <th>Option ID</th>
+            <th>Writer ID</th>
+            <th>Option Price quoted</th>
+            <th>Strike Price</th>
+            <th>Type</th>
+            <th>Number of Shares</th>
+        </tr>
+        {% for transaction in option_transactions %}
+            <tr>
+                <td>{{ transaction[6] }}</td>
+                <td>{{ transaction[0] }}</td>
+                <td>{{ transaction[2] }}</td>
+                <td>{{ transaction[1] }}</td>
+                <td>{{ transaction[3] }}</td>
+                <td>{{ transaction[4] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
 {% endblock %}
