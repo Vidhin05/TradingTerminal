@@ -11,7 +11,6 @@ from matplotlib import style
 from passlib.hash import sha256_crypt
 
 from helpers import *
-
 # configure application
 app = Flask(__name__)
 
@@ -315,6 +314,20 @@ def options():
             print("Transaction sent.")
         else:
             return apology("ERROR", "INSUFFICIENT FUNDS")
+        return redirect(url_for("index"))
+
+
+@app.route("/options_sell/", methods=["GET", "POST"])
+@login_required
+def options_sell():
+    current_user = session["user_id"]
+    current_cash = c.execute("SELECT cash FROM users WHERE id = :CURRENT_USER", [current_user]).fetchall()[0][0]
+    if request.method == "GET":
+        transactions = c.execute("SELECT * FROM option_transaction WHERE holder_id=:current_user", [current_user]).fetchall()
+        return render_template("option_sell.html", transactions=transactions)
+
+    elif request.method == "POST":
+
         return redirect(url_for("index"))
 
 
