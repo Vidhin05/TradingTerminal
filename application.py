@@ -353,8 +353,8 @@ def options_sell():
                 c.execute(
                     "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
                     " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
-                    ":option_type, :num_of_shares, :transaction_date, :option_id, :holder_id)",
-                    [current_user, option_price, strike_price, option_type, num_shares, now, option_id, current_user])
+                    ":option_type, :num_of_shares, :transaction_date, :option_id,)",
+                    [current_user, option_price, strike_price, option_type, num_shares, now, option_id])
                 db.commit()
 
             return redirect(url_for("index"))
