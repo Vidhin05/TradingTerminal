@@ -47,11 +47,10 @@ def index():
     available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = ? GROUP BY symbol",
                           [current_user]).fetchall()
     written_options = c.execute(
-        "SELECT option_id, option_type, strike_price, num_of_shares FROM option_transaction WHERE writer_id=?"
-        " GROUP BY option_id",
-        [current_user]).fetchall()
+        "SELECT option_id, option_type, strike_price, num_of_shares, stock_symbol FROM option_transaction"
+        " WHERE writer_id=? GROUP BY option_id", [current_user]).fetchall()
     unsold_options = c.execute(
-        "SELECT option_id, option_type, strike_price, num_of_shares FROM option_post WHERE writer_id=?"
+        "SELECT option_id, option_type, strike_price, num_of_shares, stock_symbol FROM option_post WHERE writer_id=?"
         " GROUP BY option_id",
         [current_user]).fetchall()
     available_options = c.execute("SELECT * FROM option_transaction WHERE holder_id=? AND is_available='Yes'",
@@ -75,7 +74,7 @@ def buy():
     if request.method == "GET":
         return render_template("buy.html", current_cash=usd(current_cash))
     elif request.method == "POST":
-        now = time.strftime("%c")
+
         stock_symbol = request.form.get("stock-symbol")
         try:
             stock_quantity = int(request.form.get("stock-quantity"))
@@ -96,7 +95,7 @@ def buy():
             c.execute("UPDATE users SET cash = ? WHERE id = ?", [current_cash, current_user])
             c.execute(
                 "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)VALUES(?, ?, ?, ?, ?)",
-                [current_user, stock_info["symbol"], stock_info["price"], stock_quantity, now])
+                [current_user, stock_info["symbol"], stock_info["price"], stock_quantity, time.strftime("%c")])
             db.commit()
             print("Transaction sent.")
         else:
@@ -248,7 +247,7 @@ def sell():
                               [session["user_id"]]).fetchall()
         return render_template("sell.html", available=available)
     elif request.method == "POST":
-        now = time.strftime("%c")
+
         current_user = session["user_id"]
         stock_symbol = request.form.get("stock-symbol")
         current_cash = c.execute("SELECT cash FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
@@ -273,7 +272,7 @@ def sell():
             c.execute("UPDATE users SET cash = ? WHERE id = ?", [current_cash, current_user])
             c.execute(
                 "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)VALUES(?, ?, ?, ?, ?)",
-                [current_user, stock_info["symbol"], stock_info["price"], 0 - stock_quantity, now])
+                [current_user, stock_info["symbol"], stock_info["price"], 0 - stock_quantity, time.strftime("%c")])
             db.commit()
             print("Transaction sent.")
         else:
@@ -291,14 +290,14 @@ def option_buy():
         return render_template("option_buy.html", transactions=transactions)
 
     elif request.method == "POST":
-        now = time.strftime("%c")
+
         option_id = request.form.get("option_id")
 
         if not option_id:
             return apology("ERROR", "FORGOT OPTION ID")
 
-        option_id, writer_id, holder_id, strike_price, option_price, option_type, num_shares, option_time, = \
-            c.execute("SELECT * FROM option_post WHERE option_id = ?", [option_id]).fetchall()[0]
+        option_id, writer_id, holder_id, stock_symbol, option_type, option_price, strike_price, num_of_shares, \
+            option_time = c.execute("SELECT * FROM option_post WHERE option_id = ?", [option_id]).fetchall()[0]
 
         transaction_cost = option_price
         if transaction_cost <= current_cash:
@@ -310,9 +309,9 @@ def option_buy():
             c.execute("UPDATE users SET cash = ? WHERE id = ?", [seller_cash, holder_id])
 
             c.execute(
-                "INSERT INTO option_transaction(option_id, writer_id, holder_id, option_type, option_price,"
-                " strike_price, num_of_shares, transaction_date, is_available) VALUES(?, ?, ?, ?, ?, ?, ?, ?, 'Yes')",
-                [option_id, writer_id, current_user, option_type, option_price, strike_price, num_shares, now])
+                "INSERT INTO option_transaction VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, 'Yes')",
+                [option_id, writer_id, current_user, stock_symbol, option_type, option_price, strike_price,
+                 num_of_shares, time.strftime("%c")])
 
             c.execute("DELETE FROM option_post WHERE option_id=?", [option_id])
             db.commit()
@@ -332,40 +331,38 @@ def option_sell():
         return render_template("option_sell.html", transactions=transactions)
 
     elif request.method == "POST":
-        now = time.strftime("%c")
+
         option_id = request.form.get("option_id")
+        stock_symbol = request.form.get("stock_symbol")
         option_price = request.form.get("option_price")
 
         if not option_id:
             strike_price = request.form.get("strike_price")
             option_type = request.form.get("option_type")
-            num_shares = request.form.get("num_of_shares")
+            num_of_shares = request.form.get("num_of_shares")
             c.execute(
-                "INSERT INTO option_post(writer_id, holder_id, option_type, option_price, strike_price,"
-                " num_of_shares, transaction_date) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                [current_user, current_user, option_type, option_price, strike_price, num_shares, now])
-
+                "INSERT INTO option_post(writer_id, holder_id, stock_symbol, option_type, option_price, strike_price,"
+                " num_of_shares, transaction_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+                [current_user, current_user, stock_symbol, option_type, option_price, strike_price, num_of_shares,
+                 time.strftime("%c")])
             db.commit()
             print("Transaction sent.")
 
-        else:
-            if option_id not in transactions[:][0]:
-                apology("ERROR", "No such option")
+        elif int(option_id) in [row[0] for row in transactions]:
+            writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, is_available = c.execute(
+                "SELECT writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, is_available "
+                "FROM option_transaction WHERE option_id = ?", [option_id]).fetchall()[0]
 
-            else:
-                writer_id, holder_id, option_type, strike_price, num_shares, is_available = c.execute(
-                    "SELECT writer_id, holder_id, option_type, strike_price, num_of_shares, is_available "
-                    "FROM option_transaction WHERE option_id = ?", [option_id]).fetchall()[0]
-                if is_available is not "Yes":
-                    apology("ERROR", "Option unavailable")
-                else:
-                    c.execute("UPDATE option_transaction SET is_available = ? WHERE holder_id = ? and option_id = ?",
-                              ["No", current_user, option_id])
-                    c.execute(
-                        "INSERT INTO option_post VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
-                        [option_id, writer_id, current_user, option_type, option_price, strike_price, num_shares, now])
-                    db.commit()
-                    print("Transaction sent.")
+            c.execute("UPDATE option_transaction SET is_available = ? WHERE holder_id = ? and option_id = ?",
+                      ["No", holder_id, option_id])
+            c.execute(
+                "INSERT INTO option_post VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [option_id, writer_id, current_user, stock_symbol, option_type, option_price, strike_price,
+                 num_of_shares, time.strftime("%c")])
+            db.commit()
+            print("Transaction sent.")
+        else:
+            return apology("ERROR", "No such option")
 
         return redirect(url_for("index"))
 
