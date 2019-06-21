@@ -327,35 +327,37 @@ def options_sell():
         return render_template("option_sell.html", transactions=transactions)
 
     elif request.method == "POST":
-        now = time.strftime("%c")
-        option_id = request.form.get("option-ID")
-
-        if not option_id:
-
-            strike_price = request.form.get("strike_price")
+            now = time.strftime("%c")
+            option_id = request.form.get("option-ID")
             option_price = request.form.get("option_price")
-            option_type = request.form.get("option_type")
-            num_shares = request.form.get("num_of_shares")
 
-            c.execute(
-                "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
-                " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
-                ":option_type, :num_of_shares, :transaction_date, :option_id)",
-                [current_user, option_price, strike_price, option_type, num_shares, now, option_id])
+            if not option_id:
 
-            db.commit()
-            print("Transaction sent.")
-        else:
-            option_id, writer_id, strike_price, option_price, option_type, num_shares, option_time, = \
-                c.execute("SELECT * FROM option_transaction WHERE option_id = :option_id", [option_id]).fetchall()[0]
+                strike_price = request.form.get("strike_price")
+                option_type = request.form.get("option_type")
+                num_shares = request.form.get("num_of_shares")
 
-            c.execute(
-                "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
-                " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
-                ":option_type, :num_of_shares, :transaction_date, :option_id, :holder_id)",
-                [current_user, option_price, strike_price, option_type, num_shares, now, option_id, current_user])
+                c.execute(
+                    "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
+                    " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
+                    ":option_type, :num_of_shares, :transaction_date, :option_id)",
+                    [current_user, option_price, strike_price, option_type, num_shares, now, option_id])
 
-        return redirect(url_for("index"))
+                db.commit()
+                print("Transaction sent.")
+            else:
+
+                _, writer_id, holder_id, option_type, _, strike_price,  num_shares, _ = \
+                    c.execute("SELECT * FROM option_transaction WHERE option_id = :option_id", [option_id]).fetchall()[0]
+
+                c.execute(
+                    "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
+                    " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
+                    ":option_type, :num_of_shares, :transaction_date, :option_id, :holder_id)",
+                    [current_user, option_price, strike_price, option_type, num_shares, now, option_id, current_user])
+                db.commit()
+
+            return redirect(url_for("index"))
 
 
 if __name__ == "__main__":
