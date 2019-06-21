@@ -9,27 +9,29 @@
         <tr>
             <th>Option ID</th>
             <th>Writer ID</th>
+            <th>Holder ID</th>
+            <th>Option Type</th>
             <th>Option Price quoted</th>
             <th>Strike Price</th>
-            <th>Type</th>
             <th>Number of Shares</th>
         </tr>
         {% for option_transaction in transactions %}
             <tr>
                 <td>{{ option_transaction[0] }}</td>
                 <td>{{ option_transaction[1] }}</td>
-                <td>{{ option_transaction[3] }}</td>
                 <td>{{ option_transaction[2] }}</td>
+                <td>{{ option_transaction[3] }}</td>
                 <td>{{ option_transaction[4] }}</td>
                 <td>{{ option_transaction[5] }}</td>
+                <td>{{ option_transaction[6] }}</td>
             </tr>
         {% endfor %}
     </table>
 
-    <form action="{{ url_for('options') }}" method="post">
+    <form action="{{ url_for('option_buy') }}" method="post">
         <fieldset>
             <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" name="option-ID" placeholder="Option ID"
+                <input autocomplete="off" autofocus class="form-control" name="option_id" placeholder="Option ID"
                        type="text"/>
             </div>
             <div class="form-group">
