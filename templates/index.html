@@ -33,4 +33,24 @@
             {% endif %}
         {% endfor %}
     </table>
+    <table>
+        <tr>
+            <th>Option ID</th>
+            <th>Writer ID</th>
+            <th>Option Type</th>
+            <th>Strike Price</th>
+            <th>Option Price</th>
+            <th>Number of Shares</th>
+        </tr>
+        {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction[0] }}</td>
+                <td>{{ transaction[1] }}</td>
+                <td>{{ transaction[3] }}</td>
+                <td>{{ transaction[2] }}</td>
+                <td>{{ transaction[4] }}</td>
+                <td>{{ transaction[5] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
 {% endblock %}
