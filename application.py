@@ -328,10 +328,10 @@ def options_sell():
 
     elif request.method == "POST":
             now = time.strftime("%c")
-            option_id = request.form.get("option-ID")
+            id = request.form.get("option-ID")
             option_price = request.form.get("option_price")
 
-            if not option_id:
+            if not id:
 
                 strike_price = request.form.get("strike_price")
                 option_type = request.form.get("option_type")
@@ -341,20 +341,20 @@ def options_sell():
                     "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
                     " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
                     ":option_type, :num_of_shares, :transaction_date, :option_id)",
-                    [current_user, option_price, strike_price, option_type, num_shares, now, option_id])
+                    [current_user, option_price, strike_price, option_type, num_shares, now, id])
 
                 db.commit()
                 print("Transaction sent.")
             else:
 
                 _, writer_id, holder_id, option_type, _, strike_price,  num_shares, _ = \
-                    c.execute("SELECT * FROM option_transaction WHERE option_id = :option_id", [option_id]).fetchall()[0]
+                    c.execute("SELECT * FROM option_transaction WHERE option_id = :option_id", [id]).fetchall()[0]
 
                 c.execute(
                     "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
                     " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
                     ":option_type, :num_of_shares, :transaction_date, :option_id,)",
-                    [current_user, option_price, strike_price, option_type, num_shares, now, option_id])
+                    [current_user, option_price, strike_price, option_type, num_shares, now, id])
                 db.commit()
 
             return redirect(url_for("index"))
