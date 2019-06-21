@@ -5,6 +5,18 @@
 {% endblock %}
 
 {% block main %}
+    <table>
+        <tr>
+            <th>Stock Symbol</th>
+            <th>Number of Shares</th>
+        </tr>
+        {% for row in available %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
     <form action="{{ url_for('sell') }}" method="post">
         <h3>Sell your stock</h3>
         <fieldset>

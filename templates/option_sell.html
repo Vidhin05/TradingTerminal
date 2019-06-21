@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Options Sell
+{% endblock %}
+
+{% block main %}
+    <table>
+        <tr>
+            <th>Option ID</th>
+            <th>Writer ID</th>
+            <th>Option Type</th>
+            <th>Option Price</th>
+            <th>Strike Price</th>
+            <th>Number of Shares</th>
+            <th>Transaction Date</th>
+        </tr>
+        {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction[0] }}</td>
+                <td>{{ transaction[1] }}</td>
+                <td>{{ transaction[3] }}</td>
+                <td>{{ transaction[4] }}</td>
+                <td>{{ transaction[5] }}</td>
+                <td>{{ transaction[6] }}</td>
+                <td>{{ transaction[7] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <br><br>
+    <form action="{{ url_for('option_sell') }}" method="post">
+        <fieldset>
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="option_id" placeholder="Option ID"
+                       type="number" id="option_id" onkeyup="myScript()"/>
+            </div>
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="strike_price"
+                       placeholder="Strike Price" type="text" id="strike_price"/>
+            </div>
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="option_price" placeholder="Option Price"
+                       type="text" id="option_price"/>
+            </div>
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="num_of_shares"
+                       placeholder="Quantity of Shares" type="text" id="num_of_shares"/>
+            </div>
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="option_type"
+                       placeholder="PUT/CALL" type="text" id="option_type"/>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-default" type="submit">Sell</button>
+            </div>
+        </fieldset>
+    </form>
+
+    <script>
+        function myScript() {
+            if ($('#option_id').val().trim().length !== 0) {
+                $('#strike_price').hide();
+                $('#option_type').hide();
+                $('#num_of_shares').hide();
+
+            } else {
+                $('#strike_price').show();
+                $('#option_type').show();
+                $('#num_of_shares').show();
+            }
+        }
+    </script>
+{% endblock %}
