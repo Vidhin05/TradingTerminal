@@ -40,6 +40,7 @@
         <tr>
             <th>Option ID</th>
             <th>Writer ID</th>
+            <th>Stock Symbol</th>
             <th>Option Type</th>
             <th>Option Price</th>
             <th>Strike Price</th>
@@ -55,6 +56,7 @@
                 <td>{{ transaction[5] }}</td>
                 <td>{{ transaction[6] }}</td>
                 <td>{{ transaction[7] }}</td>
+                <td>{{ transaction[8] }}</td>
             </tr>
         {% endfor %}
     </table>
@@ -63,6 +65,7 @@
     <table>
         <tr>
             <th>Option ID</th>
+            <th>Number of Shares</th>
             <th>Option Type</th>
             <th>Strike Price</th>
             <th>Number of Shares</th>
@@ -70,6 +73,7 @@
         {% for transaction in written_options %}
             <tr>
                 <td>{{ transaction[0] }}</td>
+                <td>{{ transaction[4] }}</td>
                 <td>{{ transaction[1] }}</td>
                 <td>{{ transaction[2] }}</td>
                 <td>{{ transaction[3] }}</td>
@@ -81,13 +85,15 @@
     <table>
         <tr>
             <th>Option ID</th>
+            <th>Number of Shares</th>
             <th>Option Type</th>
             <th>Strike Price</th>
             <th>Number of Shares</th>
         </tr>
-        {% for transaction in unsold_options %}
+        {% for transaction in written_options %}
             <tr>
                 <td>{{ transaction[0] }}</td>
+                <td>{{ transaction[4] }}</td>
                 <td>{{ transaction[1] }}</td>
                 <td>{{ transaction[2] }}</td>
                 <td>{{ transaction[3] }}</td>
