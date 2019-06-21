@@ -99,10 +99,10 @@ def history():
     """Show history of transactions."""
     current_user = session["user_id"]
     transactions = c.execute("SELECT * FROM transactions WHERE user_id = :user_id", [current_user]).fetchall()
-    option_transactions = c.execute("SELECT * FROM option_transactions WHERE writer_id = :user_id",
+    # option_transactions = c.execute("SELECT * FROM option_transaction WHERE writer_id = :user_id",
+    #                                [current_user]).fetchall()
+    option_transactions = c.execute("SELECT * FROM option_transaction WHERE holder_id = :user_id",
                                     [current_user]).fetchall()
-    option_transactions += c.execute("SELECT * FROM option_transactions WHERE holder_id = :user_id",
-                                     [current_user]).fetchall()
     return render_template("history.html", transactions=transactions, option_transactions=option_transactions,
                            lookup=lookup, usd=usd)
 
@@ -290,26 +290,25 @@ def options():
 
         if not option_id:
             return apology("ERROR", "FORGOT OPTION ID")
-        writer_id, strike_price, option_price, option_type, num_shares, option_time, option_id = \
-            c.execute("SELECT * FROM option_post WHERE option-id = :option_id", [option_id]).fetchall()[0]
+        option_id, writer_id, strike_price, option_price, option_type, num_shares, option_time, = \
+            c.execute("SELECT * FROM option_post WHERE option_id = :option_id", [option_id]).fetchall()[0]
 
         # stock_info = lookup(stock_symbol)
         # if not stock_info:
         #     return apology("ERROR", "INVALID STOCK")
 
-        transaction_cost = \
-            c.execute("SELECT option_price FROM option_post WHERE option_id = :CURRENT_OPTION",
-                      [option_id]).fetchall()[0][0]
-        
+        transaction_cost = option_price
+
         # transaction_cost = stock_info["price"] * stock_quantity
         if transaction_cost <= current_cash:
             current_cash -= transaction_cost
             c.execute("UPDATE users SET cash = :cash WHERE id = :id", [current_cash, current_user])
 
             c.execute(
-                "INSERT INTO option_transaction(writer_id, option_price, strike_price, option_type, num_of_shares, transaction_date, option_id, holder_id)"
-                "VALUES(:writer_id, :option_price, strike_price, :type, :num_of_shares, :time, :Option-ID, :holder_id)",
-                [writer_id option_price, strike_price, option_type, num_shares, now, option_id, current_user])
+                "INSERT INTO option_transaction(writer_id, option_price, strike_price, option_type, num_of_shares,"
+                " transaction_date, option_id, holder_id) VALUES(:writer_id, :option_price, :strike_price, "
+                ":option_type, :num_of_shares, :transaction_date, :option_id, :holder_id)",
+                [writer_id, option_price, strike_price, option_type, num_shares, now, option_id, current_user])
 
             c.execute("DELETE FROM option_post WHERE option_id=:option_id", [option_id])
             db.commit()
