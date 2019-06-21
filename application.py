@@ -332,10 +332,10 @@ def options_sell():
 
         if not option_id:
 
-            strike_price = request.form.get("option-ID")
-            option_price = request.form.get("option-ID")
-            option_type = request.form.get("option-ID")
-            num_shares = request.form.get("option-ID")
+            strike_price = request.form.get("strike_price")
+            option_price = request.form.get("option_price")
+            option_type = request.form.get("option_type")
+            num_shares = request.form.get("num_of_shares")
 
             c.execute(
                 "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
