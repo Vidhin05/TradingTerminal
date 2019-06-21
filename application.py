@@ -239,7 +239,7 @@ def sell():
     if request.method == "GET":
         available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = :user_id GROUP BY symbol",
                               [session["user_id"]]).fetchall()
-        return render_template("sell.html")
+        return render_template("sell.html", available=available)
     elif request.method == "POST":
         now = time.strftime("%c")
         current_user = session["user_id"]

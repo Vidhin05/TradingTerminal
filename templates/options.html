@@ -14,14 +14,14 @@
             <th>Type</th>
             <th>Number of Shares</th>
         </tr>
-        {% for transaction in transactions %}
+        {% for option_transaction in transactions %}
             <tr>
-                <td>{{ transaction[0] }}</td>
-                <td>{{ transaction[1] }}</td>
-                <td>{{ transaction[3] }}</td>
-                <td>{{ transaction[2] }}</td>
-                <td>{{ transaction[4] }}</td>
-                <td>{{ transaction[5] }}</td>
+                <td>{{ option_transaction[0] }}</td>
+                <td>{{ option_transaction[1] }}</td>
+                <td>{{ option_transaction[3] }}</td>
+                <td>{{ option_transaction[2] }}</td>
+                <td>{{ option_transaction[4] }}</td>
+                <td>{{ option_transaction[5] }}</td>
             </tr>
         {% endfor %}
     </table>
