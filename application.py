@@ -186,7 +186,7 @@ def quote():
 
         style.use('ggplot')
         img = io.BytesIO()
-        df['Close'].plot()
+        df['4. close'].plot()
         plt.xticks(rotation=45)
         plt.tight_layout()
         plt.savefig(img, format='png')
@@ -195,7 +195,7 @@ def quote():
         plt.close()
         if not stock:
             return apology("ERROR", "INVALID STOCK")
-        return render_template("quoted.html", stock=stock, url='data?/png;base64,{}'.format(graph_url))
+        return render_template("quoted.html", stock=stock, url='data:image/png;base64,{}'.format(graph_url))
 
 
 @app.route("/register/", methods=["GET", "POST"])
