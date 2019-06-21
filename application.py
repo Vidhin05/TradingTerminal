@@ -11,6 +11,7 @@ from matplotlib import style
 from passlib.hash import sha256_crypt
 
 from helpers import *
+
 # configure application
 app = Flask(__name__)
 
@@ -321,43 +322,44 @@ def options():
 @login_required
 def options_sell():
     current_user = session["user_id"]
-    current_cash = c.execute("SELECT cash FROM users WHERE id = :CURRENT_USER", [current_user]).fetchall()[0][0]
     if request.method == "GET":
-        transactions = c.execute("SELECT * FROM option_transaction WHERE holder_id=:current_user", [current_user]).fetchall()
+        transactions = c.execute("SELECT * FROM option_transaction WHERE holder_id=:current_user",
+                                 [current_user]).fetchall()
         return render_template("option_sell.html", transactions=transactions)
 
     elif request.method == "POST":
-            now = time.strftime("%c")
-            id = request.form.get("option-ID")
-            option_price = request.form.get("option_price")
+        now = time.strftime("%c")
+        option_id = request.form.get("option_id")
+        option_price = request.form.get("option_price")
+        if not option_id:
 
-            if not id:
+            strike_price = request.form.get("strike_price")
+            option_type = request.form.get("option_type")
+            num_shares = request.form.get("num_of_shares")
 
-                strike_price = request.form.get("strike_price")
-                option_type = request.form.get("option_type")
-                num_shares = request.form.get("num_of_shares")
+            c.execute(
+                "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
+                " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
+                ":option_type, :num_of_shares, :transaction_date, :option_id)",
+                [current_user, option_price, strike_price, option_type, num_shares, now, id])
 
-                c.execute(
-                    "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
-                    " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
-                    ":option_type, :num_of_shares, :transaction_date, :option_id)",
-                    [current_user, option_price, strike_price, option_type, num_shares, now, id])
+            db.commit()
+            print("Transaction sent.")
+        else:
 
-                db.commit()
-                print("Transaction sent.")
-            else:
+            writer_id, holder_id, option_type, strike_price, num_shares = c.execute(
+                "SELECT writer_id, holder_id, option_type, strike_price, num_of_shares FROM option_transaction"
+                " WHERE option_id = :option_id",
+                [option_id]).fetchall()[0]
 
-                _, writer_id, holder_id, option_type, _, strike_price,  num_shares, _ = \
-                    c.execute("SELECT * FROM option_transaction WHERE option_id = :option_id", [id]).fetchall()[0]
+            c.execute(
+                "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
+                " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
+                ":option_type, :num_of_shares, :transaction_date, :option_id)",
+                [current_user, option_price, strike_price, option_type, num_shares, now, option_id])
+            db.commit()
 
-                c.execute(
-                    "INSERT INTO option_post(writer_id, option_price, strike_price, option_type, num_of_shares,"
-                    " transaction_date, option_id) VALUES(:writer_id, :option_price, :strike_price, "
-                    ":option_type, :num_of_shares, :transaction_date, :option_id,)",
-                    [current_user, option_price, strike_price, option_type, num_shares, now, id])
-                db.commit()
-
-            return redirect(url_for("index"))
+        return redirect(url_for("index"))
 
 
 if __name__ == "__main__":
