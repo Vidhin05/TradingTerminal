@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 import sqlite3
 import time
 from tempfile import gettempdir
@@ -297,7 +298,7 @@ def option_buy():
             return apology("ERROR", "FORGOT OPTION ID")
 
         option_id, writer_id, holder_id, stock_symbol, option_type, option_price, strike_price, num_of_shares, \
-            option_time = c.execute("SELECT * FROM option_post WHERE option_id = ?", [option_id]).fetchall()[0]
+        option_time = c.execute("SELECT * FROM option_post WHERE option_id = ?", [option_id]).fetchall()[0]
 
         transaction_cost = option_price
         if transaction_cost <= current_cash:
@@ -368,4 +369,6 @@ def option_sell():
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    # app.run(debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
