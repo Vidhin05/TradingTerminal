@@ -24,25 +24,31 @@
         {% endfor %}
     </table>
     <br>
+
     <table>
         <tr>
             <th>Option ID</th>
             <th>Writer ID</th>
-            <th>Option Price quoted</th>
+            <th>Stock Symbol</th>
+            <th>Option Type</th>
+            <th>Option Price</th>
             <th>Strike Price</th>
-            <th>Type</th>
             <th>Number of Shares</th>
+            <th>Transaction Date</th>
+            <th>Expiry Date</th>
         </tr>
-        {% for transaction in option_transactions %}
+        {% for transaction in available_options %}
             <tr>
                 <td>{{ transaction[0] }}</td>
                 <td>{{ transaction[1] }}</td>
+                <td>{{ transaction[3] }}</td>
                 <td>{{ transaction[4] }}</td>
                 <td>{{ transaction[5] }}</td>
-                <td>{{ transaction[3] }}</td>
                 <td>{{ transaction[6] }}</td>
+                <td>{{ transaction[7] }}</td>
+                <td>{{ transaction[8] }}</td>
+                <td>{{ transaction[10] }}</td>
             </tr>
         {% endfor %}
     </table>
-
 {% endblock %}

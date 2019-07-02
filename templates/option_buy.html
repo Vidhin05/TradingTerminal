@@ -15,6 +15,7 @@
             <th>Option Price quoted</th>
             <th>Strike Price</th>
             <th>Number of Shares</th>
+            <th>Expiry Date</th>
         </tr>
         {% for option_transaction in transactions %}
             <tr>
@@ -26,10 +27,11 @@
                 <td>{{ option_transaction[5] }}</td>
                 <td>{{ option_transaction[6] }}</td>
                 <td>{{ option_transaction[7] }}</td>
+                <td>{{ option_transaction[10] }}</td>
             </tr>
         {% endfor %}
     </table>
-
+    <br><br>
     <form action="{{ url_for('option_buy') }}" method="post">
         <fieldset>
             <div class="form-group">

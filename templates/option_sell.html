@@ -15,6 +15,7 @@
             <th>Strike Price</th>
             <th>Number of Shares</th>
             <th>Transaction Date</th>
+            <th>Expiry Date</th>
         </tr>
         {% for transaction in transactions %}
             <tr>
@@ -26,6 +27,7 @@
                 <td>{{ transaction[6] }}</td>
                 <td>{{ transaction[7] }}</td>
                 <td>{{ transaction[8] }}</td>
+                <td>{{ transaction[9] }}</td>
             </tr>
         {% endfor %}
     </table>
@@ -64,8 +66,8 @@
             </div>
 
             <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" name="expiry"
-                       placeholder="Days to expiry" type="text" id="expiry"/>
+                <input autocomplete="off" autofocus class="form-control" name="days_to_expiry"
+                       placeholder="Days to expiry" type="text" id="days_to_expiry"/>
             </div>
 
             <div class="form-group">
@@ -80,11 +82,13 @@
                 $('#strike_price').hide();
                 $('#option_type').hide();
                 $('#num_of_shares').hide();
+                $('#days_to_expiry').hide();
                 $('#stock_symbol').hide();
             } else {
                 $('#strike_price').show();
                 $('#option_type').show();
                 $('#num_of_shares').show();
+                $('#days_to_expiry').show();
                 $('#stock_symbol').show();
             }
         }

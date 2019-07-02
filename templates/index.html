@@ -46,6 +46,7 @@
             <th>Strike Price</th>
             <th>Number of Shares</th>
             <th>Transaction Date</th>
+            <th>Expiry Date</th>
         </tr>
         {% for transaction in available_options %}
             <tr>
@@ -57,6 +58,7 @@
                 <td>{{ transaction[6] }}</td>
                 <td>{{ transaction[7] }}</td>
                 <td>{{ transaction[8] }}</td>
+                <td>{{ transaction[10] }}</td>
             </tr>
         {% endfor %}
     </table>
@@ -65,10 +67,11 @@
     <table>
         <tr>
             <th>Option ID</th>
-            <th>Number of Shares</th>
+            <th>Stock Symbol</th>
             <th>Option Type</th>
             <th>Strike Price</th>
             <th>Number of Shares</th>
+            <th>Expiry Date</th>
         </tr>
         {% for transaction in written_options %}
             <tr>
@@ -77,6 +80,7 @@
                 <td>{{ transaction[1] }}</td>
                 <td>{{ transaction[2] }}</td>
                 <td>{{ transaction[3] }}</td>
+                <td>{{ transaction[5] }}</td>
             </tr>
         {% endfor %}
     </table>
@@ -85,18 +89,20 @@
     <table>
         <tr>
             <th>Option ID</th>
-            <th>Number of Shares</th>
+            <th>Stock Symbol</th>
             <th>Option Type</th>
             <th>Strike Price</th>
             <th>Number of Shares</th>
+            <th>Expiry Date</th>
         </tr>
-        {% for transaction in written_options %}
+        {% for transaction in unsold_options %}
             <tr>
                 <td>{{ transaction[0] }}</td>
                 <td>{{ transaction[4] }}</td>
                 <td>{{ transaction[1] }}</td>
                 <td>{{ transaction[2] }}</td>
                 <td>{{ transaction[3] }}</td>
+                <td>{{ transaction[5] }}</td>
             </tr>
         {% endfor %}
     </table>
