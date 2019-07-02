@@ -3,7 +3,7 @@ import io
 import sqlite3
 import time
 from tempfile import gettempdir
-
+import time
 import matplotlib.pyplot as plt
 from flask import Flask
 from flask_session import Session
@@ -44,6 +44,8 @@ c = db.cursor()
 def index():
     current_user = session["user_id"]
     username, current_cash = c.execute("SELECT username, cash FROM users WHERE id = ?", [current_user]).fetchall()[0]
+    cash_update()
+
     available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = ? GROUP BY symbol",
                           [current_user]).fetchall()
     written_options = c.execute(
@@ -119,6 +121,8 @@ def history():
 @app.route("/leaderboard/")
 @login_required
 def leaderboard():
+    cash_update()
+
     leaders = c.execute("SELECT username, cash, assets FROM users ORDER BY cash + assets DESC").fetchall()
     return render_template("leaderboard.html", leaders=leaders, usd=usd)
 
@@ -297,7 +301,7 @@ def option_buy():
             return apology("ERROR", "FORGOT OPTION ID")
 
         option_id, writer_id, holder_id, stock_symbol, option_type, option_price, strike_price, num_of_shares, \
-            option_time = c.execute("SELECT * FROM option_post WHERE option_id = ?", [option_id]).fetchall()[0]
+        option_time = c.execute("SELECT * FROM option_post WHERE option_id = ?", [option_id]).fetchall()[0]
 
         transaction_cost = option_price
         if transaction_cost <= current_cash:
@@ -365,6 +369,17 @@ def option_sell():
             return apology("ERROR", "No such option")
 
         return redirect(url_for("index"))
+
+
+def cash_update():
+    users, last_update_time, current_cash = c.execute("SELECT ID, start_time, cash FROM users").fetchall()
+    current_time = time.time()
+    time_elapsed = current_time - last_update_time[0]
+    if time_elapsed > 300:
+        for i in range(len(users)):
+            current_cash[i] *= pow(e, 0.1 * (time_elapsed / 31557600))
+            c.execute("UPDATE cash SET cash = ? WHERE id = ?", [current_cash[i], users[i]])
+        db.commit()
 
 
 if __name__ == "__main__":
