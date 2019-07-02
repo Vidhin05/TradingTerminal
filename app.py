@@ -4,7 +4,7 @@ import math
 import os
 import sqlite3
 import time
-import datetime
+from datetime import datetime
 from tempfile import gettempdir
 
 import matplotlib.pyplot as plt
@@ -48,7 +48,6 @@ def index():
     refresh()
     current_user = session["user_id"]
     username, current_cash = c.execute("SELECT username, cash FROM users WHERE id = ?", [current_user]).fetchall()[0]
-
 
     available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = ? GROUP BY symbol",
                           [current_user]).fetchall()
@@ -121,6 +120,7 @@ def history():
     return render_template("history.html", transactions=transactions, option_transactions=option_transactions,
                            lookup=lookup, usd=usd)
 
+
 @app.route("/leaderboard/")
 @login_required
 def leaderboard():
@@ -131,7 +131,6 @@ def leaderboard():
 
 @app.route("/login/", methods=["GET", "POST"])
 def login():
-
     session.clear()
 
     # if user reached route via POST (as by submitting a form via POST)
@@ -395,7 +394,7 @@ def cash_update(users, current_cash, time_elapsed):
 def option_update(current_time):
     available_options = c.execute("SELECT * FROM option_transaction WHERE is_available='Yes'").fetchall()
     for option in available_options:
-        if current_time > option[10]:  # expiry_date
+        if current_time > datetime.strptime(option[10], '%c').timestamp():  # expiry_date
             if option[4] == "CALL":  # option_type
                 if option[6] < lookup(option[3])["price"]:  # strike_price
                     writer_id, holder_id = option[1], option[2]
@@ -467,8 +466,6 @@ def option_update(current_time):
                     c.execute("UPDATE option_transaction SET is_available='No' WHERE option_id = ? ", [option[0]])
                     db.commit()
                     print("Transaction sent.")
-
-
 
 
 if __name__ == "__main__":
