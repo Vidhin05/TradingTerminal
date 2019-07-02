@@ -4,6 +4,7 @@ import math
 import os
 import sqlite3
 import time
+import datetime
 from tempfile import gettempdir
 
 import matplotlib.pyplot as plt
@@ -346,6 +347,9 @@ def option_sell():
             strike_price = request.form.get("strike_price")
             option_type = request.form.get("option_type")
             num_of_shares = request.form.get("num_of_shares")
+            expiry = request.form.get("expiry")
+
+
             c.execute(
                 "INSERT INTO option_post(writer_id, holder_id, stock_symbol, option_type, option_price, strike_price,"
                 " num_of_shares, transaction_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
