@@ -1,6 +1,6 @@
-matplotlib
-yfinance
-Flask
-Flask-Session
 passlib
-SQLAlchemy
+Flask_Session
+numpy
+yfinance
+matplotlib
+Flask
