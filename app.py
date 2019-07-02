@@ -373,15 +373,97 @@ def option_sell():
         return redirect(url_for("index"))
 
 
-def cash_update():
+def refresh():
     users, last_update_time, current_cash = c.execute("SELECT ID, last_update_time, cash FROM users").fetchall()
     current_time = time.time()
     time_elapsed = current_time - last_update_time[0]
     if time_elapsed > 300:
-        for i in range(len(users)):
-            current_cash[i] *= math.exp(0.1 * (time_elapsed / 31557600))
-            c.execute("UPDATE cash SET cash = ? WHERE id = ?", [current_cash[i], users[i]])
-        db.commit()
+        cash_update(users, current_cash, time_elapsed)
+        option_update(current_time)
+
+
+def cash_update(users, current_cash, time_elapsed):
+    for i in range(len(users)):
+        current_cash[i] *= math.exp(0.1 * (time_elapsed / 31557600))
+        c.execute("UPDATE cash SET cash = ? WHERE id = ?", [current_cash[i], users[i]])
+    db.commit()
+
+
+def option_update(current_time):
+    available_options = c.execute("SELECT * FROM option_transaction WHERE is_available='Yes'").fetchall()
+    for option in available_options:
+        if current_time > option[10]:  # expiry_date
+            if option[4] == "CALL":  # option_type
+                if option[6] < lookup(option[3])["price"]:  # strike_price
+                    writer_id, holder_id = option[1], option[2]
+                    holder_cash = c.execute("SELECT cash FROM users WHERE id = ?", [holder_id]).fetchall()[0][0]
+                    writer_cash = c.execute("SELECT cash FROM users WHERE id = ?", [writer_id]).fetchall()[0][0]
+                    strike_price = option[3]
+                    stock_symbol = option[3]
+                    stock_quantity = option[7]
+                    stock_price = lookup(stock_symbol)["price"]
+                    transaction_cost = stock_price * stock_quantity
+                    if transaction_cost <= writer_cash:
+                        writer_cash -= transaction_cost
+                        c.execute("UPDATE users SET cash = ? WHERE id = ?", [writer_cash, writer_id])
+                        c.execute(
+                            "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)VALUES(?, ?, ?, ?, ?)",
+                            [writer_id, stock_symbol, stock_price, stock_quantity,
+                             time.strftime("%c")])
+                        c.execute(
+                            "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)VALUES(?, ?, ?, ?, ?)",
+                            [writer_id, stock_symbol, stock_price, -stock_quantity,
+                             time.strftime("%c")])
+                        db.commit()
+                        print("Transaction sent.")
+
+                    transaction_cost = strike_price * stock_quantity
+                    if transaction_cost <= holder_cash:
+                        holder_cash -= transaction_cost
+                        c.execute("UPDATE users SET cash = ? WHERE id = ?", [holder_cash, holder_id])
+                        c.execute(
+                            "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)VALUES(?, ?, ?, ?, ?)",
+                            [holder_id, stock_symbol, strike_price, stock_quantity,
+                             time.strftime("%c")])
+                        c.execute("UPDATE option_transaction SET is_available='No' WHERE option_id = ? ", [option[0]])
+                        db.commit()
+                        print("Transaction sent.")
+
+            elif option[4] == "PUT":
+                if option[6] > lookup(option[3])["price"]:  # strike_price
+                    writer_id, holder_id = option[1], option[2]
+                    holder_cash = c.execute("SELECT cash FROM users WHERE id = ?", [holder_id]).fetchall()[0][0]
+                    writer_cash = c.execute("SELECT cash FROM users WHERE id = ?", [writer_id]).fetchall()[0][0]
+                    strike_price = option[3]
+                    stock_symbol = option[3]
+                    stock_quantity = option[7]
+                    stock_price = lookup(stock_symbol)["price"]
+
+                    transaction_cost = (strike_price - stock_price) * stock_quantity
+                    if transaction_cost <= holder_cash:
+                        holder_cash += transaction_cost
+                        c.execute("UPDATE users SET cash = ? WHERE id = ?", [holder_cash, holder_id])
+                        c.execute(
+                            "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)VALUES(?, ?, ?, ?, ?)",
+                            [holder_id, stock_symbol, stock_price, stock_quantity,
+                             time.strftime("%c")])
+                        c.execute(
+                            "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)VALUES(?, ?, ?, ?, ?)",
+                            [holder_id, stock_symbol, strike_price, -stock_quantity,
+                             time.strftime("%c")])
+                        db.commit()
+                        print("Transaction sent.")
+
+                    transaction_cost = strike_price * stock_quantity
+                    writer_cash -= transaction_cost
+                    c.execute("UPDATE users SET cash = ? WHERE id = ?", [writer_cash, writer_id])
+                    c.execute(
+                        "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)VALUES(?, ?, ?, ?, ?)",
+                        [writer_id, stock_symbol, strike_price, stock_quantity,
+                         time.strftime("%c")])
+                    c.execute("UPDATE option_transaction SET is_available='No' WHERE option_id = ? ", [option[0]])
+                    db.commit()
+                    print("Transaction sent.")
 
 
 if __name__ == "__main__":
