@@ -348,13 +348,12 @@ def option_sell():
             option_type = request.form.get("option_type")
             num_of_shares = request.form.get("num_of_shares")
             expiry = request.form.get("expiry")
-
-
+            expiry_date = datetime.datetime.fromtimestamp(time.time() + expiry*86400).strftime('%c')
             c.execute(
                 "INSERT INTO option_post(writer_id, holder_id, stock_symbol, option_type, option_price, strike_price,"
-                " num_of_shares, transaction_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+                " num_of_shares, transaction_date,expiry_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [current_user, current_user, stock_symbol, option_type, option_price, strike_price, num_of_shares,
-                 time.strftime("%c")])
+                 time.strftime("%c")], expiry_date)
             db.commit()
             print("Transaction sent.")
 
