@@ -302,7 +302,7 @@ def option_buy():
             return apology("ERROR", "FORGOT OPTION ID")
 
         option_id, writer_id, holder_id, stock_symbol, option_type, option_price, strike_price, num_of_shares, \
-        option_time = c.execute("SELECT * FROM option_post WHERE option_id = ?", [option_id]).fetchall()[0]
+        option_time, is_available, expiry_date = c.execute("SELECT * FROM option_post WHERE option_id = ?", [option_id]).fetchall()[0]
 
         transaction_cost = option_price
         if transaction_cost <= current_cash:
@@ -314,9 +314,9 @@ def option_buy():
             c.execute("UPDATE users SET cash = ? WHERE id = ?", [seller_cash, holder_id])
 
             c.execute(
-                "INSERT INTO option_transaction VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, 'Yes')",
+                "INSERT INTO option_transaction VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, 'Yes', ?)",
                 [option_id, writer_id, current_user, stock_symbol, option_type, option_price, strike_price,
-                 num_of_shares, time.strftime("%c")])
+                 num_of_shares, time.strftime("%c"), expiry_date])
 
             c.execute("DELETE FROM option_post WHERE option_id=?", [option_id])
             db.commit()
@@ -347,25 +347,25 @@ def option_sell():
             option_type = request.form.get("option_type")
             num_of_shares = request.form.get("num_of_shares")
             expiry = request.form.get("expiry")
-            expiry_date = datetime.datetime.fromtimestamp(time.time() + expiry * 86400).strftime('%c')
+            expiry_date = datetime.fromtimestamp(time.time() + expiry * 86400).strftime('%c')
             c.execute(
                 "INSERT INTO option_post(writer_id, holder_id, stock_symbol, option_type, option_price, strike_price,"
                 " num_of_shares, transaction_date,is_available,expiry_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [current_user, current_user, stock_symbol, option_type, option_price, strike_price, num_of_shares,
-                 time.strftime("%c")], 'Yes', expiry_date)
+                 time.strftime("%c"), 'Yes', expiry_date])
             db.commit()
 
         elif int(option_id) in [row[0] for row in transactions]:
-            writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares = c.execute(
+            writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, expiry_date = c.execute(
                 "SELECT writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares"
                 "FROM option_transaction WHERE option_id = ?", [option_id]).fetchall()[0]
 
             c.execute("UPDATE option_transaction SET is_available = ? WHERE holder_id = ? and option_id = ?",
                       ["No", holder_id, option_id])
             c.execute(
-                "INSERT INTO option_post VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO option_post VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [option_id, writer_id, current_user, stock_symbol, option_type, option_price, strike_price,
-                 num_of_shares, time.strftime("%c")])
+                 num_of_shares, time.strftime("%c"), 'Yes', expiry_date])
             db.commit()
             print("Transaction sent.")
         else:
@@ -382,8 +382,13 @@ def refresh():
         available_options = c.execute("SELECT * FROM option_post WHERE is_available='Yes'").fetchall()
         for option in available_options:
             if current_time > datetime.strptime(option[10], '%c').timestamp():
-                c.execute("UPDATE option_post SET is_available='No' WHERE option_id=?", [option[0]])
-        db.commit()
+                current_option = c.execute(
+                    "SELECT * FROM option_transaction WHERE option_id = ?", [option[0]]).fetchall()[0]
+                c.execute("DELETE FROM option_post WHERE option_id=?", [option[0]])
+                c.execute(
+                    "INSERT INTO option_transaction VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    [current_option])
+                db.commit()
         cash_update(users, current_cash, time_elapsed)
         option_update(current_time)
 
