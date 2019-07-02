@@ -1,10 +1,11 @@
 import base64
 import io
+import math
 import os
 import sqlite3
 import time
 from tempfile import gettempdir
-import time
+
 import matplotlib.pyplot as plt
 from flask import Flask
 from flask_session import Session
@@ -354,8 +355,8 @@ def option_sell():
             print("Transaction sent.")
 
         elif int(option_id) in [row[0] for row in transactions]:
-            writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, is_available = c.execute(
-                "SELECT writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, is_available "
+            writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares = c.execute(
+                "SELECT writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares"
                 "FROM option_transaction WHERE option_id = ?", [option_id]).fetchall()[0]
 
             c.execute("UPDATE option_transaction SET is_available = ? WHERE holder_id = ? and option_id = ?",
@@ -373,12 +374,12 @@ def option_sell():
 
 
 def cash_update():
-    users, last_update_time, current_cash = c.execute("SELECT ID, start_time, cash FROM users").fetchall()
+    users, last_update_time, current_cash = c.execute("SELECT ID, last_update_time, cash FROM users").fetchall()
     current_time = time.time()
     time_elapsed = current_time - last_update_time[0]
     if time_elapsed > 300:
         for i in range(len(users)):
-            current_cash[i] *= pow(e, 0.1 * (time_elapsed / 31557600))
+            current_cash[i] *= math.exp(0.1 * (time_elapsed / 31557600))
             c.execute("UPDATE cash SET cash = ? WHERE id = ?", [current_cash[i], users[i]])
         db.commit()
 

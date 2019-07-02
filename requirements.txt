@@ -3,5 +3,4 @@ yfinance
 Flask
 Flask-Session
 passlib
-gunicorn
 SQLAlchemy
