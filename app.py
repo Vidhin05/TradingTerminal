@@ -347,14 +347,13 @@ def option_sell():
             option_type = request.form.get("option_type")
             num_of_shares = request.form.get("num_of_shares")
             expiry = request.form.get("expiry")
-            expiry_date = datetime.datetime.fromtimestamp(time.time() + expiry*86400).strftime('%c')
+            expiry_date = datetime.datetime.fromtimestamp(time.time() + expiry * 86400).strftime('%c')
             c.execute(
                 "INSERT INTO option_post(writer_id, holder_id, stock_symbol, option_type, option_price, strike_price,"
-                " num_of_shares, transaction_date,expiry_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " num_of_shares, transaction_date,is_available,expiry_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [current_user, current_user, stock_symbol, option_type, option_price, strike_price, num_of_shares,
-                 time.strftime("%c")], expiry_date)
+                 time.strftime("%c")], 'Yes', expiry_date)
             db.commit()
-            print("Transaction sent.")
 
         elif int(option_id) in [row[0] for row in transactions]:
             writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares = c.execute(
@@ -380,6 +379,11 @@ def refresh():
     current_time = time.time()
     time_elapsed = current_time - last_update_time[0]
     if time_elapsed > 300:
+        available_options = c.execute("SELECT * FROM option_post WHERE is_available='Yes'").fetchall()
+        for option in available_options:
+            if current_time > datetime.strptime(option[10], '%c').timestamp():
+                c.execute("UPDATE option_post SET is_available='No' WHERE option_id=?", [option[0]])
+        db.commit()
         cash_update(users, current_cash, time_elapsed)
         option_update(current_time)
 
@@ -387,7 +391,7 @@ def refresh():
 def cash_update(users, current_cash, time_elapsed):
     for i in range(len(users)):
         current_cash[i] *= math.exp(0.1 * (time_elapsed / 31557600))
-        c.execute("UPDATE cash SET cash = ? WHERE id = ?", [current_cash[i], users[i]])
+        c.execute("UPDATE users SET cash = ? WHERE id = ?", [current_cash[i], users[i]])
     db.commit()
 
 
