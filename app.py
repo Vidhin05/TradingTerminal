@@ -44,9 +44,10 @@ c = db.cursor()
 @app.route("/")
 @login_required
 def index():
+    refresh()
     current_user = session["user_id"]
     username, current_cash = c.execute("SELECT username, cash FROM users WHERE id = ?", [current_user]).fetchall()[0]
-    cash_update()
+
 
     available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = ? GROUP BY symbol",
                           [current_user]).fetchall()
@@ -72,6 +73,7 @@ def index():
 @app.route("/buy/", methods=["GET", "POST"])
 @login_required
 def buy():
+    refresh()
     current_user = session["user_id"]
     current_cash = c.execute("SELECT cash FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
     """Buy shares of stock."""
@@ -110,6 +112,7 @@ def buy():
 @app.route("/history/")
 @login_required
 def history():
+    refresh()
     """Show history of transactions."""
     current_user = session["user_id"]
     transactions = c.execute("SELECT * FROM transactions WHERE user_id = ?", [current_user]).fetchall()
@@ -117,23 +120,17 @@ def history():
     return render_template("history.html", transactions=transactions, option_transactions=option_transactions,
                            lookup=lookup, usd=usd)
 
-
-# test
-
 @app.route("/leaderboard/")
 @login_required
 def leaderboard():
-    cash_update()
-
+    refresh()
     leaders = c.execute("SELECT username, cash, assets FROM users ORDER BY cash + assets DESC").fetchall()
     return render_template("leaderboard.html", leaders=leaders, usd=usd)
 
 
 @app.route("/login/", methods=["GET", "POST"])
 def login():
-    """Log user in."""
 
-    # forget any user_id
     session.clear()
 
     # if user reached route via POST (as by submitting a form via POST)
@@ -248,6 +245,7 @@ def register():
 @login_required
 def sell():
     """Sell shares of stock."""
+    refresh()
     if request.method == "GET":
         available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = ? GROUP BY symbol",
                               [session["user_id"]]).fetchall()
@@ -289,6 +287,7 @@ def sell():
 @app.route("/option_buy/", methods=["GET", "POST"])
 @login_required
 def option_buy():
+    refresh()
     current_user = session["user_id"]
     current_cash = c.execute("SELECT cash FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
     if request.method == "GET":
@@ -330,6 +329,7 @@ def option_buy():
 @app.route("/option_sell/", methods=["GET", "POST"])
 @login_required
 def option_sell():
+    refresh()
     current_user = session["user_id"]
     transactions = c.execute("SELECT * FROM option_transaction WHERE holder_id=? AND is_available='Yes'",
                              [current_user]).fetchall()
@@ -464,6 +464,8 @@ def option_update(current_time):
                     c.execute("UPDATE option_transaction SET is_available='No' WHERE option_id = ? ", [option[0]])
                     db.commit()
                     print("Transaction sent.")
+
+
 
 
 if __name__ == "__main__":
