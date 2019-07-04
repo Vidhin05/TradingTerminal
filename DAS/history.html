@@ -81,13 +81,16 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+
+                                    {% for transaction in transactions %}
                                         <tr>
-                                            <td>1</td>
-                                            <td>2</td>
-                                            <td>3</td>
-                                            <td>4</td>
-                                            <td>5</td>
+                                            <td>{{ transaction[0] }}</td>
+                                            <td>{{ lookup(transaction[2])["name"] }}</td>
+                                            <td>{{ usd(transaction[3]) }}</td>
+                                            <td>{{ transaction[4] }}</td>
+                                            <td>{{ transaction[5] }}</td>
                                         </tr>
+                                    {% endfor %}
                                     </tbody>
                                     <tfoot>
                                         <tr>
@@ -124,17 +127,21 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>1</td>
-                                            <td>2</td>
-                                            <td>3</td>
-                                            <td>4</td>
-                                            <td>5</td>
-                                            <td>6</td>
-                                            <td>Cell 7</td>
-                                            <td>Cell 8</td>
-                                            <td>Cell 9</td>
-                                        </tr>
+
+                                            {% for transaction in available_options %}
+                                            <tr>
+                                                <td>{{ transaction[0] }}</td>
+                                                <td>{{ transaction[1] }}</td>
+                                                <td>{{ transaction[3] }}</td>
+                                                <td>{{ transaction[4] }}</td>
+                                                <td>{{ transaction[5] }}</td>
+                                                <td>{{ transaction[6] }}</td>
+                                                <td>{{ transaction[7] }}</td>
+                                                <td>{{ transaction[8] }}</td>
+                                                <td>{{ transaction[10] }}</td>
+                                            </tr>
+                                        {% endfor %}
+
                                     </tbody>
                                     <tfoot>
                                         <tr>

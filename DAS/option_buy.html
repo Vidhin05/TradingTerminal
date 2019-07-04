@@ -86,18 +86,20 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>Cell 1</td>
-                                        <td>Cell 2</td>
-                                        <td>Cell 3</td>
-                                        <td>Cell 4</td>
-                                        <td>Cell 5</td>
-                                        <td>Cell 6</td>
-                                        <td>Cell 7</td>
-                                        <td>8</td>
-                                        <td>Cell 9</td>
-                                    </tr>
-                                    <tr></tr>
+                                    {% for option_transaction in transactions %}
+                                        <tr>
+                                            <td>{{ option_transaction[0] }}</td>
+                                            <td>{{ option_transaction[1] }}</td>
+                                            <td>{{ option_transaction[2] }}</td>
+                                            <td>{{ option_transaction[3] }}</td>
+                                            <td>{{ option_transaction[4] }}</td>
+                                            <td>{{ option_transaction[5] }}</td>
+                                            <td>{{ option_transaction[6] }}</td>
+                                            <td>{{ option_transaction[7] }}</td>
+                                            <td>{{ option_transaction[10] }}</td>
+                                        </tr>
+                                    {% endfor %}
+
                                 </tbody>
                                 <tfoot>
                                     <tr>

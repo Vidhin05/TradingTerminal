@@ -77,28 +77,26 @@
                                             <th>Security Name</th>
                                             <th>No. of Shares</th>
                                             <th>Current Price</th>
-                                            <th>Start date</th>
-                                            <th>Current Price</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>Airi Satou</td>
-                                            <td>Accountant</td>
-                                            <td>Tokyo</td>
-                                            <td>33</td>
-                                            <td>2008/11/28</td>
-                                            <td>$162,700</td>
-                                        </tr>
+                                        {% for stock in available %}
+                                        {% if stock[1] > 0 %}
+                                            <tr>
+                                                <td>{{ stock[0] }}</td>
+                                                <td>{{ lookup(stock[0])["name"] }}</td>
+                                                <td>{{ stock[1] }}</td>
+                                                <td>{{ usd(lookup(stock[0])["price"]) }}</td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
                                     </tbody>
                                     <tfoot>
                                         <tr>
                                             <td><strong>Symbol</strong></td>
-                                            <td><strong>Position</strong></td>
-                                            <td><strong>Office</strong></td>
-                                            <td><strong>Age</strong></td>
-                                            <td><strong>Start date</strong></td>
-                                            <td><strong>Salary</strong></td>
+                                            <td><strong>Security Name</strong></td>
+                                            <td><strong>No. of Shares</strong></td>
+                                            <td><strong>Current Price</strong></td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -125,16 +123,19 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        {% for transaction in available_options %}
                                         <tr>
-                                            <td>Airi Satou</td>
-                                            <td>Accountant</td>
-                                            <td>Tokyo</td>
-                                            <td>33</td>
-                                            <td>2008/11/28</td>
-                                            <td>$162,700</td>
-                                            <td>Cell 7</td>
-                                            <td>Cell 8</td>
+                                            <td>{{ transaction[0] }}</td>
+                                            <td>{{ transaction[1] }}</td>
+                                            <td>{{ transaction[3] }}</td>
+                                            <td>{{ transaction[4] }}</td>
+                                            <td>{{ transaction[5] }}</td>
+                                            <td>{{ transaction[6] }}</td>
+                                            <td>{{ transaction[7] }}</td>
+                                            <td>{{ transaction[8] }}</td>
+                                            <td>{{ transaction[10] }}</td>
                                         </tr>
+                                    {% endfor %}
                                     </tbody>
                                     <tfoot>
                                         <tr>
@@ -170,14 +171,16 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>Airi Satou</td>
-                                            <td>Accountant</td>
-                                            <td>Tokyo</td>
-                                            <td>33</td>
-                                            <td>Cell 5</td>
-                                            <td>2008/11/28</td>
-                                        </tr>
+                                        {% for transaction in written_options %}
+                                            <tr>
+                                                <td>{{ transaction[0] }}</td>
+                                                <td>{{ transaction[4] }}</td>
+                                                <td>{{ transaction[1] }}</td>
+                                                <td>{{ transaction[2] }}</td>
+                                                <td>{{ transaction[3] }}</td>
+                                                <td>{{ transaction[5] }}</td>
+                                            </tr>
+                                        {% endfor %}
                                     </tbody>
                                     <tfoot>
                                         <tr>
@@ -187,7 +190,6 @@
                                             <td><strong>Option Price<br></strong></td>
                                             <td><strong>Strike Price<br></strong></td>
                                             <td><strong>&nbsp;Number Of Shares<br></strong></td>
-                                            <td></td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -212,14 +214,16 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>Airi Satou</td>
-                                            <td>Accountant</td>
-                                            <td>Tokyo</td>
-                                            <td>33</td>
-                                            <td>Cell 5</td>
-                                            <td>2008/11/28</td>
-                                        </tr>
+                                        {% for transaction in unsold_options %}
+                                            <tr>
+                                                <td>{{ transaction[0] }}</td>
+                                                <td>{{ transaction[4] }}</td>
+                                                <td>{{ transaction[1] }}</td>
+                                                <td>{{ transaction[2] }}</td>
+                                                <td>{{ transaction[3] }}</td>
+                                                <td>{{ transaction[5] }}</td>
+                                            </tr>
+                                        {% endfor %}
                                         <tr></tr>
                                     </tbody>
                                     <tfoot>
