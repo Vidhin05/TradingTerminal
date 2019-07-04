@@ -18,7 +18,7 @@
             <div class="row">
                 <div class="col-lg-5 d-none d-lg-flex">
                     <div class="flex-grow-1 bg-register-image"
-                         style="background-image: url(&quot;{{ url_for('static', filename='image2.jpeg') }}&quot;);"></div>
+                         style="background-image: url({{ url_for('static', filename='image2.jpeg') }});"></div>
                 </div>
                 <div class="col-lg-7">
                     <div class="p-5">
@@ -46,7 +46,7 @@
                             <hr>
                         </form>
                         <div class="text-center"><a class="small" href="forgot-password.html">Forgot Password?</a></div>
-                        <div class="text-center"><a class="small" href="login.html">Already have an account? Login!</a>
+                        <div class="text-center"><a class="small" href="{{ url_for('login') }}">Already have an account? Login!</a>
                         </div>
                     </div>
                 </div>
