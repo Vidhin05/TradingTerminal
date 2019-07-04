@@ -393,6 +393,12 @@ def option_sell():
         return redirect(url_for("index"))
 
 
+# noinspection PyUnusedLocal
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'), 404
+
+
 def refresh():
     users = c.execute("SELECT ID FROM users").fetchall()
     last_update_time = c.execute("SELECT last_update_time FROM users").fetchall()

@@ -1,10 +1,102 @@
-{% extends "layout.html" %}
+<!DOCTYPE html>
+<html>
 
-{% block title %}
-    Apology
-{% endblock %}
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Error</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
+</head>
 
-{% block main %}
-    <img alt="Sorry!"
-         src="http://memegen.link/custom/{{ top | urlencode }}/{{ bottom | urlencode }}.jpg?alt=http://i.imgur.com/A3ZR65I.png"/>
-{% endblock %}
+<body id="page-top">
+<div id="wrapper">
+    <nav class="navbar navbar-dark align-items-start sidebar sidebar-dark accordion bg-gradient-primary p-0">
+        <div class="container-fluid d-flex flex-column p-0">
+            <a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0"
+               href="{{ url_for('index') }}">
+                <div class="sidebar-brand-icon rotate-n-15"></div>
+                <div class="sidebar-brand-text mx-3"><span>DAIICT STOCK MARKET</span></div>
+            </a>
+            <hr class="sidebar-divider my-0">
+            <ul class="nav navbar-nav text-light" id="accordionSidebar">
+                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('index') }}"><i
+                        class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('quote') }}"><i
+                        class="fas fa-window-maximize"></i><span>Quote</span></a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('buy') }}"><i
+                        class="fas fa-window-maximize"></i><span>Stock Buy</span></a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('sell') }}"><i
+                        class="fas fa-window-maximize"></i><span>Stock Sell</span></a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('history') }}"><i
+                        class="fas fa-window-maximize"></i><span>History</span></a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('leaderboard') }}"><i
+                        class="fas fa-window-maximize"></i><span>Leaderboard</span></a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('option_buy') }}"><i
+                        class="fas fa-window-maximize"></i><span>Option Buy</span></a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('option_buy') }}"><i
+                        class="fas fa-window-maximize"></i><span>Option Buy</span></a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('option_sell') }}"><i
+                        class="fas fa-window-maximize"></i><span>Option Sell</span></a></li>
+
+            </ul>
+            <div class="text-center d-none d-md-inline">
+                <button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button>
+            </div>
+        </div>
+    </nav>
+    <div class="d-flex flex-column" id="content-wrapper">
+        <div id="content">
+            <nav class="navbar navbar-light navbar-expand bg-white shadow mb-4 topbar static-top">
+                <div class="container-fluid">
+                    <button class="btn btn-link d-md-none rounded-circle mr-3" id="sidebarToggleTop" type="button"><i
+                            class="fas fa-bars"></i></button>
+                    <ul class="nav navbar-nav flex-nowrap ml-auto">
+
+                        <div class="d-none d-sm-block topbar-divider"></div>
+                        <li class="nav-item dropdown no-arrow" role="presentation">
+                        <li class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link"
+                                                                  data-toggle="dropdown" aria-expanded="false" href="#"><span
+                                class="d-none d-lg-inline mr-2 text-gray-600 small">{{ username }}</span></a>
+                            <div class="dropdown-menu shadow dropdown-menu-right animated--grow-in"
+                                 role="menu"><a class="dropdown-item" role="presentation" href="#"><i
+                                    class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>&nbsp;Profile</a>
+                                <a
+                                        class="dropdown-item" role="presentation" href="#"><i
+                                        class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>&nbsp;Activity log</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" role="presentation" href="{{ url_for('logout') }}"><i
+                                        class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>&nbsp;Logout</a>
+                            </div>
+                        </li>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            <div class="container-fluid">
+                <div class="text-center mt-5">
+                    <p class="text-dark mb-5 lead">
+                        <img alt="Sorry!"
+                             src="http://memegen.link/custom/{{ top | urlencode }}/{{ bottom | urlencode }}.jpg?alt=http://i.imgur.com/A3ZR65I.png"/>
+                    </p>
+                    <a href="{{ url_for('index') }}">←
+                        Back to Dashboard</a></div>
+            </div>
+        </div>
+        <footer class="bg-white sticky-footer">
+            <div class="container my-auto">
+                <div class="text-center my-auto copyright"><span>Copyright © DAIICT STOCK MARKET 2019</span></div>
+            </div>
+        </footer>
+    </div>
+    <a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.js"></script>
+<script src="{{ url_for('static', filename='js/script.min.js') }}"></script>
+</body>
+
+</html>
