@@ -35,12 +35,7 @@
                         class="fas fa-window-maximize"></i><span>Option Buy</span></a></li>
                 <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('option_sell') }}"><i
                         class="fas fa-window-maximize"></i><span>Option Sell</span></a></li>
-                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('login') }}"><i
-                        class="far fa-user-circle"></i><span>Login</span></a></li>
-                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('register') }}"><i
-                        class="fas fa-user-circle"></i><span>Register</span></a></li>
-                <li class="nav-item" role="presentation"></li>
-                <li class="nav-item" role="presentation"></li>
+
             </ul>
             <div class="text-center d-none d-md-inline">
                 <button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button>
@@ -59,7 +54,7 @@
                         <li class="nav-item dropdown no-arrow" role="presentation">
                         <li class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link"
                                                                   data-toggle="dropdown" aria-expanded="false" href="#"><span
-                                class="d-none d-lg-inline mr-2 text-gray-600 small">Vidhin Parmar</span></a>
+                                class="d-none d-lg-inline mr-2 text-gray-600 small">{{ username }}</span></a>
                             <div class="dropdown-menu shadow dropdown-menu-right animated--grow-in"
                                  role="menu"><a class="dropdown-item" role="presentation" href="#"><i
                                     class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>&nbsp;Profile</a><a
@@ -144,7 +139,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.js"></script>
-<script href="{{ url_for('static', filename='script.min.js') }}"></script>
+<script src="{{ url_for('static', filename='script.min.js') }}"></script>
 </body>
 
 </html>

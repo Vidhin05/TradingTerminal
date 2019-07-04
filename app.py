@@ -76,10 +76,10 @@ def index():
 def buy():
     refresh()
     current_user = session["user_id"]
-    current_cash = c.execute("SELECT cash FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
+    username, current_cash = c.execute("SELECT username, cash FROM users WHERE id = ?", [current_user]).fetchall()[0]
     """Buy shares of stock."""
     if request.method == "GET":
-        return render_template("buy.html", current_cash=usd(current_cash))
+        return render_template("buy.html", current_cash=usd(current_cash), username=username)
     elif request.method == "POST":
 
         stock_symbol = request.form.get("stock-symbol")
@@ -116,19 +116,22 @@ def history():
     refresh()
     """Show history of transactions."""
     current_user = session["user_id"]
+    username = c.execute("SELECT username FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
     transactions = c.execute("SELECT * FROM transactions WHERE user_id = ?", [current_user]).fetchall()
-    option_transactions = c.execute("SELECT * FROM option_transaction WHERE holder_id = ? AND is_available = 'Yes'"
-                                    , [current_user]).fetchall()
+    option_transactions = c.execute("SELECT * FROM option_transaction WHERE holder_id = ? AND is_available = 'Yes'",
+                                    [current_user]).fetchall()
     return render_template("history.html", transactions=transactions, option_transactions=option_transactions,
-                           lookup=lookup, usd=usd)
+                           lookup=lookup, usd=usd, username=username)
 
 
 @app.route("/leaderboard/")
 @login_required
 def leaderboard():
     refresh()
+    current_user = session["user_id"]
+    username = c.execute("SELECT username FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
     leaders = c.execute("SELECT username, cash, assets FROM users ORDER BY cash + assets DESC").fetchall()
-    return render_template("leaderboard.html", leaders=leaders, usd=usd)
+    return render_template("leaderboard.html", leaders=leaders, usd=usd, username=username)
 
 
 @app.route("/login/", methods=["GET", "POST"])
@@ -180,15 +183,19 @@ def logout():
 @login_required
 def quote():
     """Get stock quote."""
+    current_user = session["user_id"]
+    username = c.execute("SELECT username FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
     if request.method == "GET":
-        return render_template("quote.html")
+        return render_template("quote.html", username=username)
     elif request.method == "POST":
         if not request.form.get("stock-symbol"):
             return apology("Error", "Forgot to enter a stock")
         stock = lookup(request.form.get("stock-symbol"))
         df = stock_hist(stock['symbol'])
 
-        style.use('ggplot')
+        # style.use('ggplot')
+        # style.use('seaborn-deep')
+        style.use('fivethirtyeight')
         img = io.BytesIO()
         df['Close'].plot()
         plt.xticks(rotation=45)
@@ -199,7 +206,8 @@ def quote():
         plt.close()
         if not stock:
             return apology("ERROR", "INVALID STOCK")
-        return render_template("quoted.html", stock=stock, url='data:image/png;base64,{}'.format(graph_url))
+        return render_template("quoted.html", stock=stock, url='data:image/png;base64,{}'.format(graph_url),
+                               username=username)
 
 
 @app.route("/register/", methods=["GET", "POST"])
@@ -248,10 +256,12 @@ def register():
 def sell():
     """Sell shares of stock."""
     refresh()
+    current_user = session["user_id"]
+    username = c.execute("SELECT username FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
     if request.method == "GET":
         available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = ? GROUP BY symbol",
                               [session["user_id"]]).fetchall()
-        return render_template("sell.html", available=available)
+        return render_template("sell.html", available=available, username=username)
     elif request.method == "POST":
 
         current_user = session["user_id"]
@@ -291,11 +301,11 @@ def sell():
 def option_buy():
     refresh()
     current_user = session["user_id"]
-    current_cash = c.execute("SELECT cash FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
+    username, current_cash = c.execute("SELECT username, cash FROM users WHERE id = ?", [current_user]).fetchall()[0]
     options = c.execute("SELECT * FROM option_post WHERE is_available='Yes'").fetchall()
     if request.method == "GET":
         transactions = c.execute("SELECT * FROM option_post where is_available='Yes'").fetchall()
-        return render_template("option_buy.html", transactions=transactions)
+        return render_template("option_buy.html", transactions=transactions, username=username)
 
     elif request.method == "POST":
 
@@ -306,7 +316,7 @@ def option_buy():
 
         elif int(option_id) in [row[0] for row in options]:
             option_id, writer_id, holder_id, stock_symbol, option_type, option_price, strike_price, num_of_shares, \
-                option_time, is_available, expiry_date = \
+            option_time, is_available, expiry_date = \
                 c.execute("SELECT * FROM option_post WHERE option_id = ?", [option_id]).fetchall()[0]
 
             transaction_cost = option_price
@@ -338,10 +348,11 @@ def option_buy():
 def option_sell():
     refresh()
     current_user = session["user_id"]
+    username = c.execute("SELECT username FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
     transactions = c.execute("SELECT * FROM option_transaction WHERE holder_id=? AND is_available='Yes'",
                              [current_user]).fetchall()
     if request.method == "GET":
-        return render_template("option_sell.html", transactions=transactions)
+        return render_template("option_sell.html", transactions=transactions, username=username)
 
     elif request.method == "POST":
 

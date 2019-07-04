@@ -15,7 +15,8 @@
 <div id="wrapper">
     <nav class="navbar navbar-dark align-items-start sidebar sidebar-dark accordion bg-gradient-primary p-0">
         <div class="container-fluid d-flex flex-column p-0">
-            <a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0" href="{{ url_for('index') }}">
+            <a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0"
+               href="{{ url_for('index') }}">
                 <div class="sidebar-brand-icon rotate-n-15"></div>
                 <div class="sidebar-brand-text mx-3"><span>DAIICT STOCK MARKET</span></div>
             </a>
@@ -35,12 +36,7 @@
                         class="fas fa-window-maximize"></i><span>Option Buy</span></a></li>
                 <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('option_sell') }}"><i
                         class="fas fa-window-maximize"></i><span>Option Sell</span></a></li>
-                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('login') }}"><i
-                        class="far fa-user-circle"></i><span>Login</span></a></li>
-                <li class="nav-item" role="presentation"><a class="nav-link" href="{{ url_for('register') }}"><i
-                        class="fas fa-user-circle"></i><span>Register</span></a></li>
-                <li class="nav-item" role="presentation"></li>
-                <li class="nav-item" role="presentation"></li>
+
             </ul>
             <div class="text-center d-none d-md-inline">
                 <button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button>
@@ -59,7 +55,7 @@
                         <li class="nav-item dropdown no-arrow" role="presentation">
                         <li class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link"
                                                                   data-toggle="dropdown" aria-expanded="false" href="#"><span
-                                class="d-none d-lg-inline mr-2 text-gray-600 small">Vidhin Parmar</span></a>
+                                class="d-none d-lg-inline mr-2 text-gray-600 small">{{ username }}</span></a>
                             <div class="dropdown-menu shadow dropdown-menu-right animated--grow-in"
                                  role="menu"><a class="dropdown-item" role="presentation" href="#"><i
                                     class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>&nbsp;Profile</a><a
@@ -128,26 +124,16 @@
                 </div>
                 <!-- Start: Chart -->
                 <div class="row">
-                    <div class="col">
+                    <div class="col-xl-6">
                         <div class="card shadow mb-4">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="text-primary font-weight-bold m-0">Intraday TimeSeries</h6>
-                                <div class="dropdown no-arrow">
-                                    <button class="btn btn-link btn-sm dropdown-toggle" data-toggle="dropdown"
-                                            aria-expanded="false" type="button"><i
-                                            class="fas fa-ellipsis-v text-gray-400"></i></button>
-                                    <div class="dropdown-menu shadow dropdown-menu-right animated--fade-in"
-                                         role="menu">
-                                        <p class="text-center dropdown-header">dropdown header:</p><a
-                                            class="dropdown-item" role="presentation" href="#">&nbsp;Action</a><a
-                                            class="dropdown-item" role="presentation" href="#">&nbsp;Another action</a>
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item" role="presentation" href="#">&nbsp;Something else
-                                            here</a></div>
-                                </div>
+                                <h6 class="text-primary font-weight-bold m-0">Intraday TimeSeries {{ stock.name }}</h6>
                             </div>
                             <div class="card-body">
-                                <img src={{ url }} alt="Image">
+                                <div class="chart-area" style="height: 382px;"><img src="{{ url }}" height="764"
+                                                                                    width="900"
+                                                                                    style="display: block; height: 382px; width: 622px;">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -166,7 +152,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.js"></script>
-<script href="{{ url_for('static', filename='script.min.js') }}"></script>
+<script src="{{ url_for('static', filename='script.min.js') }}"></script>
 </body>
 
 </html>
