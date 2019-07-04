@@ -43,7 +43,7 @@ Session(app)
 
 DATABASE_URL = os.environ['DATABASE_URL']
 # change sslmode to allow for local run
-db = psycopg2.connect(DATABASE_URL, sslmode='require')
+db = psycopg2.connect(DATABASE_URL, sslmode='allow')
 # db = psycopg2.connect(user="", password="", host="127.0.0.1", port="5432", database="tradingterminal")
 c = db.cursor()
 
