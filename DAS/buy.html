@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>Page Not Found - DAIICT STOCK MARKET</title>
+    <title>Blank Page - DAIICT STOCK MARKET</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
@@ -22,7 +23,7 @@
                 <ul class="nav navbar-nav text-light" id="accordionSidebar">
                     <li class="nav-item" role="presentation"><a class="nav-link" href="index.html"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
                     <li class="nav-item" role="presentation"><a class="nav-link" href="quote.html"><i class="fas fa-window-maximize"></i><span>Quote</span></a></li>
-                    <li class="nav-item" role="presentation"><a class="nav-link" href="buy.html"><i class="fas fa-window-maximize"></i><span>Stock Buy</span></a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link active" href="buy.html"><i class="fas fa-window-maximize"></i><span>Stock Buy</span></a></li>
                     <li class="nav-item" role="presentation"><a class="nav-link" href="sell.html"><i class="fas fa-window-maximize"></i><span>Stock Sell</span></a></li>
                     <li class="nav-item" role="presentation"><a class="nav-link"><i class="fas fa-table"></i><span>History</span></a></li>
                     <li class="nav-item" role="presentation"><a class="nav-link" href="option_buy.html"><i class="fas fa-window-maximize"></i><span>Option Buy</span></a></li>
@@ -63,13 +64,25 @@
                     </div>
                 </nav>
                 <div class="container-fluid">
-                    <div class="text-center mt-5">
-                        <div class="error mx-auto" data-text="404">
-                            <p class="m-0">404</p>
-                        </div>
-                        <p class="text-dark mb-5 lead">Page Not Found</p>
-                        <p class="text-black-50 mb-0">It looks like you found a glitch in the matrix...</p><a href="/">← Back to Dashboard</a></div>
+                    <h3 class="text-dark mb-1">Purchase stocks</h3>
                 </div>
+                <div class="p-5">
+                    <div class="text-center"></div>
+                    <form class="user">
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0"><input class="form-control form-control-user" type="text" id="exampleFirstName" placeholder="Stock Symbol" name="stock-symbol"></div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0"><input class="form-control form-control-user" type="text" id="exampleFirstName" placeholder="Quantity" name="stock-quantity"></div>
+                        </div><button class="btn btn-primary btn-block text-white btn-user" type="submit">Buy</button>
+                        <hr>
+                    </form>
+                </div>
+                <!-- Start: Registration Form -->
+                <div class="card shadow-lg o-hidden border-0 my-5">
+                    <div class="card-body p-0"></div>
+                </div>
+                <!-- End: Registration Form -->
             </div>
             <footer class="bg-white sticky-footer">
                 <div class="container my-auto">

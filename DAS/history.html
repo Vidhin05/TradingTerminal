@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>Page Not Found - DAIICT STOCK MARKET</title>
+    <title>Blank Page - DAIICT STOCK MARKET</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
@@ -63,12 +63,103 @@
                     </div>
                 </nav>
                 <div class="container-fluid">
-                    <div class="text-center mt-5">
-                        <div class="error mx-auto" data-text="404">
-                            <p class="m-0">404</p>
+                    <h3 class="text-dark mb-4">History of transactions</h3>
+                    <div class="card shadow" style="margin-bottom: 15px;">
+                        <div class="card-header py-3">
+                            <p class="text-primary m-0 font-weight-bold">Stocks</p>
                         </div>
-                        <p class="text-dark mb-5 lead">Page Not Found</p>
-                        <p class="text-black-50 mb-0">It looks like you found a glitch in the matrix...</p><a href="/">← Back to Dashboard</a></div>
+                        <div class="card-body">
+                            <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                                <table class="table dataTable my-0" id="dataTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Transaction Number</th>
+                                            <th>Security Name</th>
+                                            <th>Current Price</th>
+                                            <th>No. of Shares</th>
+                                            <th>Transaction date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                    {% for transaction in transactions %}
+                                        <tr>
+                                            <td>{{ transaction[0] }}</td>
+                                            <td>{{ lookup(transaction[2])["name"] }}</td>
+                                            <td>{{ usd(transaction[3]) }}</td>
+                                            <td>{{ transaction[4] }}</td>
+                                            <td>{{ transaction[5] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td><strong>Transaction Number</strong></td>
+                                            <td><strong>Security Name</strong></td>
+                                            <td><strong>Current Price</strong></td>
+                                            <td><strong>No. of Shares</strong></td>
+                                            <td><strong>Transaction date</strong></td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <p class="text-primary m-0 font-weight-bold">Options</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                                <table class="table dataTable my-0" id="dataTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Option ID</th>
+                                            <th>Writer ID</th>
+                                            <th>Stock Symbol</th>
+                                            <th>Option Type</th>
+                                            <th>Option Price</th>
+                                            <th>Strike Price</th>
+                                            <th>Number of Shares</th>
+                                            <th>Transaction Date</th>
+                                            <th>Expiry Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                            {% for transaction in available_options %}
+                                            <tr>
+                                                <td>{{ transaction[0] }}</td>
+                                                <td>{{ transaction[1] }}</td>
+                                                <td>{{ transaction[3] }}</td>
+                                                <td>{{ transaction[4] }}</td>
+                                                <td>{{ transaction[5] }}</td>
+                                                <td>{{ transaction[6] }}</td>
+                                                <td>{{ transaction[7] }}</td>
+                                                <td>{{ transaction[8] }}</td>
+                                                <td>{{ transaction[10] }}</td>
+                                            </tr>
+                                        {% endfor %}
+
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td><strong>Option ID<br></strong></td>
+                                            <td><strong>Writer ID<br></strong></td>
+                                            <td><strong>Stock Symbol<br></strong></td>
+                                            <td><strong>Option Type<br></strong></td>
+                                            <td><strong>Option Price<br></strong></td>
+                                            <td><strong>Strike Price<br></strong></td>
+                                            <td><strong>&nbsp;Number Of Shares<br></strong></td>
+                                            <td><strong>Transaction Date<br></strong></td>
+                                            <td><strong>Expiry Date</strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <footer class="bg-white sticky-footer">
