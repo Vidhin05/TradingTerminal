@@ -36,15 +36,11 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# connect sqlite3 with database
-# file = "finance.db"
-# db = sqlite3.connect(file, check_same_thread=False)
-# c = db.cursor()
-
-DATABASE_URL = os.environ['DATABASE_URL']
-# change sslmode to allow for local run
-db = psycopg2.connect(DATABASE_URL, sslmode='allow')
+# change sslmode to allow for local run and add environment variable DATABASE_URL=postgresql://localhost/tradingterminal
+# or use the command below and comment the DATABASE_URL
 # db = psycopg2.connect(user="", password="", host="127.0.0.1", port="5432", database="tradingterminal")
+DATABASE_URL = os.environ['DATABASE_URL']
+db = psycopg2.connect(DATABASE_URL, sslmode='allow')
 c = db.cursor()
 
 
