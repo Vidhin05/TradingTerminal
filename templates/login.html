@@ -36,10 +36,12 @@
                                     <div class="form-group"><input class="form-control form-control-user"
                                                                    type="password" id="exampleInputPassword"
                                                                    placeholder="Password" name="password"></div>
-                                    <button class="btn btn-primary btn-block text-white btn-user" type="submit">Login
+                                    <button class="btn btn-primary btn-block text-white btn-user" type="submit" onclick="$('#loading').show();">Login
                                     </button>
                                     <hr>
+                                    <div id="loading" style="display:none;">Logging you in...</div>
                                 </form>
+
                                 <div class="text-center"><a class="small" href="forgot-password.html">Forgot
                                     Password?</a></div>
                                 <div class="text-center"><a class="small" href="{{ url_for('register')}}">Create an Account!</a>
