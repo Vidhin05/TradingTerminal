@@ -2,12 +2,12 @@ import base64
 import io
 import math
 import os
-import sqlite3
 import time
 from datetime import datetime
 from tempfile import gettempdir
 
 import matplotlib.pyplot as plt
+import psycopg2
 from flask import Flask
 from flask_session import Session
 from matplotlib import style
@@ -37,8 +37,14 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # connect sqlite3 with database
-file = "finance.db"
-db = sqlite3.connect(file, check_same_thread=False)
+# file = "finance.db"
+# db = sqlite3.connect(file, check_same_thread=False)
+# c = db.cursor()
+
+DATABASE_URL = os.environ['DATABASE_URL']
+# change sslmode to allow for local run
+db = psycopg2.connect(DATABASE_URL, sslmode='require')
+# db = psycopg2.connect(user="", password="", host="127.0.0.1", port="5432", database="tradingterminal")
 c = db.cursor()
 
 
@@ -47,24 +53,29 @@ c = db.cursor()
 def index():
     refresh()
     current_user = session["user_id"]
-    username, current_cash = c.execute("SELECT username, cash FROM users WHERE id = ?", [current_user]).fetchall()[0]
+    c.execute("SELECT username, cash FROM users WHERE id = %s", [current_user])
+    username, current_cash = c.fetchall()[0]
 
-    available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = ? GROUP BY symbol",
-                          [current_user]).fetchall()
-
-    written_options = c.execute(
+    c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = %s GROUP BY symbol",
+              [current_user])
+    available = c.fetchall()
+    c.execute(
         "SELECT option_id, option_type, strike_price, num_of_shares, stock_symbol, expiry_date FROM option_transaction"
-        " WHERE writer_id=? GROUP BY option_id", [current_user]).fetchall()
-    unsold_options = c.execute(
+        " WHERE writer_id=%s GROUP BY option_id, option_type, strike_price, num_of_shares, stock_symbol, expiry_date",
+        [current_user])
+    written_options = c.fetchall()
+    c.execute(
         "SELECT option_id, option_type, strike_price, num_of_shares, stock_symbol, expiry_date FROM option_post "
-        "WHERE writer_id=? GROUP BY option_id",
-        [current_user]).fetchall()
-    available_options = c.execute("SELECT * FROM option_transaction WHERE holder_id=? AND is_available='Yes'",
-                                  [current_user]).fetchall()
+        "WHERE writer_id=%s GROUP BY option_id",
+        [current_user])
+    unsold_options = c.fetchall()
+    c.execute("SELECT * FROM option_transaction WHERE holder_id=%s AND is_available='Yes'",
+              [current_user])
+    available_options = c.fetchall()
     stocks_value = 0
     for stock in available:
         stocks_value += (stock[1] * lookup(stock[0])["price"])
-    c.execute("UPDATE users SET assets = ? WHERE id = ?", [stocks_value, current_user])
+    c.execute("UPDATE users SET assets = %s WHERE id = %s", [stocks_value, current_user])
     db.commit()
     return render_template("index.html", username=username, current_cash=current_cash, available=available,
                            lookup=lookup, usd=usd, stocks_value=stocks_value, available_options=available_options,
@@ -76,7 +87,8 @@ def index():
 def buy():
     refresh()
     current_user = session["user_id"]
-    username, current_cash = c.execute("SELECT username, cash FROM users WHERE id = ?", [current_user]).fetchall()[0]
+    c.execute("SELECT username, cash FROM users WHERE id = %s", [current_user])
+    username, current_cash = c.fetchall()[0]
     """Buy shares of stock."""
     if request.method == "GET":
         return render_template("buy.html", current_cash=usd(current_cash), username=username)
@@ -99,10 +111,10 @@ def buy():
         transaction_cost = stock_info["price"] * stock_quantity
         if transaction_cost <= current_cash:
             current_cash -= transaction_cost
-            c.execute("UPDATE users SET cash = ? WHERE id = ?", [current_cash, current_user])
-            c.execute(
-                "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)VALUES(?, ?, ?, ?, ?)",
-                [current_user, stock_info["symbol"], stock_info["price"], stock_quantity, time.strftime("%c")])
+            c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, current_user])
+            c.execute("INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
+                      "VALUES(%s, %s, %s, %s, %s)",
+                      [current_user, stock_info["symbol"], stock_info["price"], stock_quantity, time.strftime("%c")])
             db.commit()
             print("Transaction sent.")
         else:
@@ -116,10 +128,13 @@ def history():
     refresh()
     """Show history of transactions."""
     current_user = session["user_id"]
-    username = c.execute("SELECT username FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
-    transactions = c.execute("SELECT * FROM transactions WHERE user_id = ?", [current_user]).fetchall()
-    option_transactions = c.execute("SELECT * FROM option_transaction WHERE holder_id = ? AND is_available = 'Yes'",
-                                    [current_user]).fetchall()
+    c.execute("SELECT username FROM users WHERE id = %s", [current_user])
+    username = c.fetchall()[0][0]
+    c.execute("SELECT * FROM transactions WHERE user_id = %s", [current_user])
+    transactions = c.fetchall()
+    c.execute("SELECT * FROM option_transaction WHERE holder_id = %s AND is_available = 'Yes'",
+              [current_user])
+    option_transactions = c.fetchall()
     return render_template("history.html", transactions=transactions, option_transactions=option_transactions,
                            lookup=lookup, usd=usd, username=username)
 
@@ -129,8 +144,10 @@ def history():
 def leaderboard():
     refresh()
     current_user = session["user_id"]
-    username = c.execute("SELECT username FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
-    leaders = c.execute("SELECT username, cash, assets FROM users ORDER BY cash + assets DESC").fetchall()
+    c.execute("SELECT username FROM users WHERE id = %s", [current_user])
+    username = c.fetchall()[0][0]
+    c.execute("SELECT username, cash, assets FROM users ORDER BY cash + assets DESC")
+    leaders = c.fetchall()
     return render_template("leaderboard.html", leaders=leaders, usd=usd, username=username)
 
 
@@ -150,7 +167,7 @@ def login():
             return apology("must provide password")
 
         # query database for username
-        c.execute("SELECT * FROM users WHERE username = ?", [request.form.get("username")])
+        c.execute("SELECT * FROM users WHERE username = %s", [request.form.get("username")])
         all_rows = c.fetchall()
 
         # ensure username exists and password is correct
@@ -184,7 +201,8 @@ def logout():
 def quote():
     """Get stock quote."""
     current_user = session["user_id"]
-    username = c.execute("SELECT username FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
+    c.execute("SELECT username FROM users WHERE id = %s", [current_user])
+    username = c.fetchall()[0][0]
     if request.method == "GET":
         return render_template("quote.html", username=username)
     elif request.method == "POST":
@@ -235,17 +253,19 @@ def register():
             hashed = sha256_crypt.encrypt(password)
             try:
                 # send user details to database
-                c.execute("INSERT INTO users(username, hash) VALUES(?, ?)", [username, hashed])
+                c.execute("INSERT INTO users(username, hash) VALUES(%s, %s)", [username, hashed])
                 db.commit()
 
                 # immediately log user in
-                session["user_id"] = c.execute("SELECT * FROM users WHERE username = ?", [username]).fetchall()[0][0]
+                c.execute("SELECT * FROM users WHERE username = %s", [username])
+                session["user_id"] = c.fetchall()[0][0]
 
                 # send user to index
                 return redirect(url_for("index"))
 
             # if username is not unique alert user
-            except sqlite3.IntegrityError:
+            # except sqlite3.IntegrityError:
+            except psycopg2.IntegrityError:
                 return apology("Error", "Username taken")
         else:
             return apology("Passwords don't match")
@@ -257,18 +277,22 @@ def sell():
     """Sell shares of stock."""
     refresh()
     current_user = session["user_id"]
-    username = c.execute("SELECT username FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
+    c.execute("SELECT username FROM users WHERE id = %s", [current_user])
+    username = c.fetchall()[0][0]
     if request.method == "GET":
-        available = c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = ? GROUP BY symbol",
-                              [session["user_id"]]).fetchall()
+        c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = %s GROUP BY symbol",
+                  [session["user_id"]])
+        available = c.fetchall()
         return render_template("sell.html", available=available, username=username)
     elif request.method == "POST":
 
         current_user = session["user_id"]
         stock_symbol = request.form.get("stock-symbol")
-        current_cash = c.execute("SELECT cash FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
-        stock_available = c.execute("SELECT sum(quantity) FROM transactions WHERE user_id = ? AND symbol = ?",
-                                    [current_user, stock_symbol]).fetchall()
+        c.execute("SELECT cash FROM users WHERE id = %s", [current_user])
+        current_cash = c.fetchall()[0][0]
+        c.execute("SELECT sum(quantity) FROM transactions WHERE user_id = %s AND symbol = %s",
+                  [current_user, stock_symbol])
+        stock_available = c.fetchall()
         try:
             stock_quantity = int(request.form.get("stock-quantity"))
         except ValueError:
@@ -285,9 +309,10 @@ def sell():
             if not stock_info:
                 return apology("ERROR", "INVALID STOCK")
             current_cash += stock_info["price"] * stock_quantity
-            c.execute("UPDATE users SET cash = ? WHERE id = ?", [current_cash, current_user])
+            c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, current_user])
             c.execute(
-                "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)VALUES(?, ?, ?, ?, ?)",
+                "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
+                "VALUES(%s, %s, %s, %s, %s)",
                 [current_user, stock_info["symbol"], stock_info["price"], 0 - stock_quantity, time.strftime("%c")])
             db.commit()
             print("Transaction sent.")
@@ -301,10 +326,13 @@ def sell():
 def option_buy():
     refresh()
     current_user = session["user_id"]
-    username, current_cash = c.execute("SELECT username, cash FROM users WHERE id = ?", [current_user]).fetchall()[0]
-    options = c.execute("SELECT * FROM option_post WHERE is_available='Yes'").fetchall()
+    c.execute("SELECT username, cash FROM users WHERE id = %s", [current_user])
+    username, current_cash = c.fetchall()[0]
+    c.execute("SELECT * FROM option_post WHERE is_available='Yes'")
+    options = c.fetchall()
     if request.method == "GET":
-        transactions = c.execute("SELECT * FROM option_post where is_available='Yes'").fetchall()
+        c.execute("SELECT * FROM option_post where is_available='Yes'")
+        transactions = c.fetchall()
         return render_template("option_buy.html", transactions=transactions, username=username)
 
     elif request.method == "POST":
@@ -315,25 +343,26 @@ def option_buy():
             return apology("ERROR", "FORGOT OPTION ID")
 
         elif int(option_id) in [row[0] for row in options]:
+            c.execute("SELECT * FROM option_post WHERE option_id = %s", [option_id])
             option_id, writer_id, holder_id, stock_symbol, option_type, option_price, strike_price, num_of_shares, \
-            option_time, is_available, expiry_date = \
-                c.execute("SELECT * FROM option_post WHERE option_id = ?", [option_id]).fetchall()[0]
+            option_time, is_available, expiry_date = c.fetchall()[0]
 
             transaction_cost = option_price
             if transaction_cost <= current_cash:
                 current_cash -= transaction_cost
-                seller_cash = c.execute("SELECT cash FROM users WHERE id = ?", [holder_id]).fetchall()[0][0]
+                c.execute("SELECT cash FROM users WHERE id = %s", [holder_id])
+                seller_cash = c.fetchall()[0][0]
                 seller_cash += transaction_cost
 
-                c.execute("UPDATE users SET cash = ? WHERE id = ?", [current_cash, current_user])
-                c.execute("UPDATE users SET cash = ? WHERE id = ?", [seller_cash, holder_id])
+                c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, current_user])
+                c.execute("UPDATE users SET cash = %s WHERE id = %s", [seller_cash, holder_id])
 
                 c.execute(
-                    "INSERT INTO option_transaction VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, 'Yes', ?)",
+                    "INSERT INTO option_transaction VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Yes', %s)",
                     [option_id, writer_id, current_user, stock_symbol, option_type, option_price, strike_price,
                      num_of_shares, time.strftime("%c"), expiry_date])
 
-                c.execute("DELETE FROM option_post WHERE option_id=?", [option_id])
+                c.execute("DELETE FROM option_post WHERE option_id=%s", [option_id])
                 db.commit()
                 print("Transaction sent.")
             else:
@@ -348,9 +377,11 @@ def option_buy():
 def option_sell():
     refresh()
     current_user = session["user_id"]
-    username = c.execute("SELECT username FROM users WHERE id = ?", [current_user]).fetchall()[0][0]
-    transactions = c.execute("SELECT * FROM option_transaction WHERE holder_id=? AND is_available='Yes'",
-                             [current_user]).fetchall()
+    c.execute("SELECT username FROM users WHERE id = %s", [current_user])
+    username = c.fetchall()[0][0]
+    c.execute("SELECT * FROM option_transaction WHERE holder_id=%s AND is_available='Yes'",
+              [current_user])
+    transactions = c.fetchall()
     if request.method == "GET":
         return render_template("option_sell.html", transactions=transactions, username=username)
 
@@ -368,7 +399,8 @@ def option_sell():
             expiry_date = datetime.fromtimestamp(time.time() + expiry * 86400).strftime('%c')
             c.execute(
                 "INSERT INTO option_post(writer_id, holder_id, stock_symbol, option_type, option_price, strike_price,"
-                " num_of_shares, transaction_date,is_available,expiry_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " num_of_shares, transaction_date,is_available,expiry_date) "
+                "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 [current_user, current_user, stock_symbol, option_type, option_price, strike_price, num_of_shares,
                  time.strftime("%c"), 'Yes', expiry_date])
             db.commit()
@@ -377,12 +409,12 @@ def option_sell():
             writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, expiry_date = \
                 c.execute(
                     "SELECT writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, expiry_date"
-                    "FROM option_transaction WHERE option_id = ?", [option_id]).fetchall()[0]
+                    "FROM option_transaction WHERE option_id = %s", [option_id]).fetchall()[0]
 
-            c.execute("UPDATE option_transaction SET is_available = ? WHERE holder_id = ? and option_id = ?",
+            c.execute("UPDATE option_transaction SET is_available = %s WHERE holder_id = %s and option_id = %s",
                       ["No", holder_id, option_id])
             c.execute(
-                "INSERT INTO option_post VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO option_post VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 [option_id, writer_id, current_user, stock_symbol, option_type, option_price, strike_price,
                  num_of_shares, time.strftime("%c"), 'Yes', expiry_date])
             db.commit()
@@ -400,45 +432,52 @@ def page_not_found(error):
 
 
 def refresh():
-    users = c.execute("SELECT ID FROM users").fetchall()
-    last_update_time = c.execute("SELECT last_update_time FROM users").fetchall()
-    current_cash = c.execute("SELECT cash FROM users").fetchall()
+    c.execute("SELECT id FROM users")
+    users = c.fetchall()
+    c.execute("SELECT last_update_time FROM users")
+    last_update_time = c.fetchall()
+    c.execute("SELECT cash FROM users")
+    current_cash = c.fetchall()
 
     current_time = time.time()
     time_elapsed = current_time - datetime.strptime(last_update_time[0][0], '%c').timestamp()
     if time_elapsed > 300:
-        available_options = c.execute("SELECT * FROM option_post WHERE is_available='Yes'").fetchall()
+        c.execute("SELECT * FROM option_post WHERE is_available='Yes'")
+        available_options = c.fetchall()
         for option in available_options:
             if current_time > datetime.strptime(option[10], '%c').timestamp():
-                current_option = c.execute(
-                    "SELECT * FROM option_transaction WHERE option_id = ?", [option[0]]).fetchall()[0]
-                c.execute("DELETE FROM option_post WHERE option_id=?", [option[0]])
+                c.execute("SELECT * FROM option_transaction WHERE option_id = %s", [option[0]])
+                current_option = c.fetchall()[0]
+                c.execute("DELETE FROM option_post WHERE option_id=%s", [option[0]])
                 c.execute(
-                    "INSERT INTO option_transaction VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO option_transaction VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     [current_option])
                 db.commit()
         cash_update(users, current_cash, time_elapsed)
         option_update(current_time)
     # noinspection SqlWithoutWhere
-    c.execute("UPDATE users SET last_update_time = ?", [time.strftime('%c')])
+    c.execute("UPDATE users SET last_update_time = %s", [time.strftime('%c')])
 
 
 def cash_update(users, current_cash, time_elapsed):
     for i in range(len(users)):
         new_cash = current_cash[i][0] * math.exp(0.1 * (time_elapsed / 31557600))
-        c.execute("UPDATE users SET cash = ? WHERE id = ?", [new_cash, users[i][0]])
+        c.execute("UPDATE users SET cash = %s WHERE id = %s", [new_cash, users[i][0]])
     db.commit()
 
 
 def option_update(current_time):
-    available_options = c.execute("SELECT * FROM option_transaction WHERE is_available='Yes'").fetchall()
+    c.execute("SELECT * FROM option_transaction WHERE is_available='Yes'")
+    available_options = c.fetchall()
     for option in available_options:
         if current_time > datetime.strptime(option[10], '%c').timestamp():  # expiry_date
-            if option[4] == "CALL":  # option_typer
+            if option[4] == "CALL":  # option_type
                 if option[6] < lookup(option[3])["price"]:  # strike_price
                     writer_id, holder_id = option[1], option[2]
-                    holder_cash = float(c.execute("SELECT cash FROM users WHERE id = ?", [holder_id]).fetchall()[0][0])
-                    writer_cash = float(c.execute("SELECT cash FROM users WHERE id = ?", [writer_id]).fetchall()[0][0])
+                    c.execute("SELECT cash FROM users WHERE id = %s", [holder_id])
+                    holder_cash = float(c.fetchall()[0][0])
+                    c.execute("SELECT cash FROM users WHERE id = %s", [writer_id])
+                    writer_cash = float(c.fetchall()[0][0])
                     strike_price = option[6]
                     stock_symbol = option[3]
                     stock_quantity = int(option[7])
@@ -446,15 +485,15 @@ def option_update(current_time):
                     transaction_cost = stock_price * stock_quantity
                     if transaction_cost <= writer_cash:
                         writer_cash -= transaction_cost
-                        c.execute("UPDATE users SET cash = ? WHERE id = ?", [writer_cash, writer_id])
+                        c.execute("UPDATE users SET cash = %s WHERE id = %s", [writer_cash, writer_id])
                         c.execute(
                             "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date) "
-                            "VALUES(?, ?, ?, ?, ?)",
+                            "VALUES(%s, %s, %s, %s, %s)",
                             [writer_id, stock_symbol, stock_price, stock_quantity,
                              time.strftime("%c")])
                         c.execute(
                             "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date) "
-                            "VALUES(?, ?, ?, ?, ?)",
+                            "VALUES(%s, %s, %s, %s, %s)",
                             [writer_id, stock_symbol, stock_price, -stock_quantity,
                              time.strftime("%c")])
                         db.commit()
@@ -463,21 +502,23 @@ def option_update(current_time):
                     transaction_cost = strike_price * stock_quantity
                     if transaction_cost <= holder_cash:
                         holder_cash -= transaction_cost
-                        c.execute("UPDATE users SET cash = ? WHERE id = ?", [holder_cash, holder_id])
+                        c.execute("UPDATE users SET cash = %s WHERE id = %s", [holder_cash, holder_id])
                         c.execute(
                             "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date) "
-                            "VALUES(?, ?, ?, ?, ?)",
+                            "VALUES(%s, %s, %s, %s, %s)",
                             [holder_id, stock_symbol, strike_price, stock_quantity,
                              time.strftime("%c")])
-                        c.execute("UPDATE option_transaction SET is_available='No' WHERE option_id = ? ", [option[0]])
+                        c.execute("UPDATE option_transaction SET is_available='No' WHERE option_id = %s ", [option[0]])
                         db.commit()
                         print("Transaction sent.")
 
             elif option[4] == "PUT":
                 if option[6] > lookup(option[3])["price"]:  # strike_price
                     writer_id, holder_id = option[1], option[2]
-                    holder_cash = c.execute("SELECT cash FROM users WHERE id = ?", [holder_id]).fetchall()[0][0]
-                    writer_cash = c.execute("SELECT cash FROM users WHERE id = ?", [writer_id]).fetchall()[0][0]
+                    c.execute("SELECT cash FROM users WHERE id = %s", [holder_id])
+                    holder_cash = c.fetchall()[0][0]
+                    c.execute("SELECT cash FROM users WHERE id = %s", [writer_id])
+                    writer_cash = c.fetchall()[0][0]
                     strike_price = option[3]
                     stock_symbol = option[3]
                     stock_quantity = option[7]
@@ -486,15 +527,15 @@ def option_update(current_time):
                     transaction_cost = (strike_price - stock_price) * stock_quantity
                     if transaction_cost <= holder_cash:
                         holder_cash += transaction_cost
-                        c.execute("UPDATE users SET cash = ? WHERE id = ?", [holder_cash, holder_id])
+                        c.execute("UPDATE users SET cash = %s WHERE id = %s", [holder_cash, holder_id])
                         c.execute(
                             "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date) "
-                            "VALUES(?, ?, ?, ?, ?)",
+                            "VALUES(%s, %s, %s, %s, %s)",
                             [holder_id, stock_symbol, stock_price, stock_quantity,
                              time.strftime("%c")])
                         c.execute(
                             "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date) "
-                            "VALUES(?, ?, ?, ?, ?)",
+                            "VALUES(%s, %s, %s, %s, %s)",
                             [holder_id, stock_symbol, strike_price, -stock_quantity,
                              time.strftime("%c")])
                         db.commit()
@@ -502,13 +543,13 @@ def option_update(current_time):
 
                     transaction_cost = strike_price * stock_quantity
                     writer_cash -= transaction_cost
-                    c.execute("UPDATE users SET cash = ? WHERE id = ?", [writer_cash, writer_id])
+                    c.execute("UPDATE users SET cash = %s WHERE id = %s", [writer_cash, writer_id])
                     c.execute(
                         "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
-                        "VALUES(?, ?, ?, ?, ?)",
+                        "VALUES(%s, %s, %s, %s, %s)",
                         [writer_id, stock_symbol, strike_price, stock_quantity,
                          time.strftime("%c")])
-                    c.execute("UPDATE option_transaction SET is_available='No' WHERE option_id = ? ", [option[0]])
+                    c.execute("UPDATE option_transaction SET is_available='No' WHERE option_id = %s ", [option[0]])
                     db.commit()
                     print("Transaction sent.")
 
