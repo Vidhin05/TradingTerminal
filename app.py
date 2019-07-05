@@ -55,19 +55,23 @@ def index():
     c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = %s GROUP BY symbol",
               [current_user])
     available = c.fetchall()
+
     c.execute(
-        "SELECT option_id, option_type, strike_price, num_of_shares, stock_symbol, expiry_date FROM option_transaction"
-        " WHERE writer_id=%s GROUP BY option_id, option_type, strike_price, num_of_shares, stock_symbol, expiry_date",
+        "SELECT option_id, stock_symbol, option_type, strike_price, num_of_shares , expiry_date FROM option_transaction"
+        " WHERE writer_id=%s GROUP BY option_id, stock_symbol, option_type, strike_price, num_of_shares , expiry_date",
         [current_user])
     written_options = c.fetchall()
+
     c.execute(
-        "SELECT option_id, option_type, strike_price, num_of_shares, stock_symbol, expiry_date FROM option_post "
+        "SELECT option_id, stock_symbol, option_type, strike_price, num_of_shares , expiry_date FROM option_post "
         "WHERE writer_id=%s GROUP BY option_id",
         [current_user])
     unsold_options = c.fetchall()
+
     c.execute("SELECT * FROM option_transaction WHERE holder_id=%s AND is_available='Yes'",
               [current_user])
     available_options = c.fetchall()
+
     stocks_value = 0
     for stock in available:
         stocks_value += (stock[1] * lookup(stock[0])["price"])

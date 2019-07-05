@@ -158,7 +158,7 @@
                                     <td><strong>Option Type<br></strong></td>
                                     <td><strong>Option Price<br></strong></td>
                                     <td><strong>Strike Price<br></strong></td>
-                                    <td><strong>&nbsp;Number Of Shares<br></strong></td>
+                                    <td><strong>Number of Shares<br></strong></td>
                                     <td><strong>Transaction Date<br></strong></td>
                                     <td><strong>Expiry Date</strong></td>
                                 </tr>
@@ -178,21 +178,21 @@
                                 <thead>
                                 <tr>
                                     <th>Option ID</th>
-                                    <th>Number of Shares<br></th>
+                                    <th>Stock Symbol</th>
                                     <th>Option Type</th>
-                                    <th>Option Price</th>
                                     <th>Strike Price</th>
-                                    <th>Number of Shares</th>
+                                    <th>Number of Shares<br></th>
+                                    <th>Expiry Date</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 {% for transaction in written_options %}
                                     <tr>
                                         <td>{{ transaction[0] }}</td>
-                                        <td>{{ transaction[4] }}</td>
                                         <td>{{ transaction[1] }}</td>
                                         <td>{{ transaction[2] }}</td>
                                         <td>{{ transaction[3] }}</td>
+                                        <td>{{ transaction[4] }}</td>
                                         <td>{{ transaction[5] }}</td>
                                     </tr>
                                 {% endfor %}
@@ -200,11 +200,11 @@
                                 <tfoot>
                                 <tr>
                                     <td><strong>Option ID<br></strong></td>
-                                    <td><strong>Number of Shares<br><br></strong></td>
+                                    <td><strong>Stock Symbol<br></strong></td>
                                     <td><strong>Option Type<br></strong></td>
-                                    <td><strong>Option Price<br></strong></td>
                                     <td><strong>Strike Price<br></strong></td>
-                                    <td><strong>&nbsp;Number Of Shares<br></strong></td>
+                                    <td><strong>Number of Shares<br><br></strong></td>
+                                    <td><strong>Expiry date<br></strong></td>
                                 </tr>
                                 </tfoot>
                             </table>
@@ -222,21 +222,21 @@
                                 <thead>
                                 <tr>
                                     <th>Option ID</th>
-                                    <th>Number of Shares<br></th>
+                                    <th>Stock Symbol</th>
                                     <th>Option Type</th>
-                                    <th>Option Price</th>
                                     <th>Strike Price</th>
-                                    <th>Number of Shares</th>
+                                    <th>Number of Shares<br></th>
+                                    <th>Expiry Date</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 {% for transaction in unsold_options %}
                                     <tr>
                                         <td>{{ transaction[0] }}</td>
-                                        <td>{{ transaction[4] }}</td>
                                         <td>{{ transaction[1] }}</td>
                                         <td>{{ transaction[2] }}</td>
                                         <td>{{ transaction[3] }}</td>
+                                        <td>{{ transaction[4] }}</td>
                                         <td>{{ transaction[5] }}</td>
                                     </tr>
                                 {% endfor %}
@@ -245,11 +245,11 @@
                                 <tfoot>
                                 <tr>
                                     <td><strong>Option ID<br></strong></td>
-                                    <td><strong>Number of Shares<br><br></strong></td>
+                                    <td><strong>Stock Symbol<br></strong></td>
                                     <td><strong>Option Type<br></strong></td>
-                                    <td><strong>Option Price<br></strong></td>
                                     <td><strong>Strike Price<br></strong></td>
-                                    <td><strong>&nbsp;Number Of Shares<br></strong></td>
+                                    <td><strong>Number of Shares<br><br></strong></td>
+                                    <td><strong>Expiry date<br></strong></td>
                                     <td></td>
                                 </tr>
                                 </tfoot>
