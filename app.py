@@ -432,15 +432,13 @@ def page_not_found(error):
 
 
 def refresh():
-    c.execute("SELECT id FROM users")
-    users = c.fetchall()
-    c.execute("SELECT last_update_time FROM users")
-    last_update_time = c.fetchall()
-    c.execute("SELECT cash FROM users")
-    current_cash = c.fetchall()
+    c.execute("SELECT id, cash, last_update_time FROM users")
+    rows = c.fetchall()
+    users, current_cash = [item[0] for item in rows], [item[1] for item in rows]
+    last_update_time = [item[2] for item in rows]
 
     current_time = time.time()
-    time_elapsed = current_time - datetime.strptime(last_update_time[0][0], '%c').timestamp()
+    time_elapsed = current_time - datetime.strptime(last_update_time[0], '%c').timestamp()
     if time_elapsed > 300:
         c.execute("SELECT * FROM option_post WHERE is_available='Yes'")
         available_options = c.fetchall()
@@ -460,9 +458,10 @@ def refresh():
 
 
 def cash_update(users, current_cash, time_elapsed):
+    factor = math.exp(0.1 * (time_elapsed / 31557600))
     for i in range(len(users)):
-        new_cash = current_cash[i][0] * math.exp(0.1 * (time_elapsed / 31557600))
-        c.execute("UPDATE users SET cash = %s WHERE id = %s", [new_cash, users[i][0]])
+        new_cash = current_cash[i] * factor
+        c.execute("UPDATE users SET cash = %s WHERE id = %s", [new_cash, users[i]])
     db.commit()
 
 

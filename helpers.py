@@ -54,17 +54,10 @@ def lookup(symbol):
 
     # query Yahoo for quote
     try:
-        stock = yf.Ticker(symbol)
-        stock_info = stock.info
+        stock_info = yf.Ticker(symbol).info
 
     except:
         return None
-
-    # ensure stock exists
-    # try:
-    #     price = float(row[2])
-    # except:
-    #     return None
 
     # return stock's name (as a str), price (as a float), and (uppercased) symbol (as a str)
     return {
