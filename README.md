@@ -1,4 +1,4 @@
-# Python Stock Market
+# DAIICT Stock Market
 Stock Market Game
 
 Web application that can register users.  
