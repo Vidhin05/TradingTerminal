@@ -164,6 +164,7 @@
                             <th>Strike Price</th>
                             <th>Units<br></th>
                             <th>Expiry Date</th>
+                            <th>Available?</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -175,6 +176,7 @@
                                 <td>{{ transaction[3] }}</td>
                                 <td>{{ transaction[4] }}</td>
                                 <td>{{ transaction[5] }}</td>
+                                <td>{{ transaction[6] }}</td>
                             </tr>
                         {% endfor %}
                         <tr></tr>
@@ -187,7 +189,7 @@
                             <td><strong>Strike Price<br></strong></td>
                             <td><strong>Units<br><br></strong></td>
                             <td><strong>Expiry date<br></strong></td>
-                            <td></td>
+                            <td><strong>Available?</strong></td>
                         </tr>
                         </tfoot>
                     </table>

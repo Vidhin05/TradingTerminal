@@ -63,9 +63,8 @@ def index():
     written_options = c.fetchall()
 
     c.execute(
-        "SELECT option_id, stock_symbol, option_type, strike_price, num_of_shares , expiry_date FROM option_post "
-        "WHERE writer_id=%s GROUP BY option_id",
-        [current_user])
+        "SELECT option_id, stock_symbol, option_type, strike_price, num_of_shares , expiry_date, is_available"
+        " FROM option_post WHERE writer_id=%s GROUP BY option_id", [current_user])
     unsold_options = c.fetchall()
 
     c.execute("SELECT * FROM option_transaction WHERE holder_id=%s AND is_available='Yes'",
@@ -344,23 +343,21 @@ def option_buy():
 
         elif int(option_id) in [row[0] for row in options]:
             c.execute("SELECT * FROM option_post WHERE option_id = %s", [option_id])
-            option_id, writer_id, holder_id, stock_symbol, option_type, option_price, strike_price, num_of_shares, \
-            option_time, is_available, expiry_date = c.fetchall()[0]
+            option = c.fetchall()[0]
 
-            transaction_cost = option_price
+            transaction_cost = option[5]
             if transaction_cost <= current_cash:
                 current_cash -= transaction_cost
-                c.execute("SELECT cash FROM users WHERE id = %s", [holder_id])
+                c.execute("SELECT cash FROM users WHERE id = %s", [option[2]])
                 seller_cash = c.fetchall()[0][0]
                 seller_cash += transaction_cost
 
                 c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, current_user])
-                c.execute("UPDATE users SET cash = %s WHERE id = %s", [seller_cash, holder_id])
+                c.execute("UPDATE users SET cash = %s WHERE id = %s", [seller_cash, option[2]])
 
                 c.execute(
                     "INSERT INTO option_transaction VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Yes', %s)",
-                    [option_id, writer_id, current_user, stock_symbol, option_type, option_price, strike_price,
-                     num_of_shares, time.strftime("%c"), expiry_date])
+                    [option[:8], time.strftime("%c"), option[-1]])
 
                 c.execute("DELETE FROM option_post WHERE option_id=%s", [option_id])
                 db.commit()
