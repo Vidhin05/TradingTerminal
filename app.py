@@ -444,13 +444,18 @@ def refresh():
         available_options = c.fetchall()
         for option in available_options:
             if current_time > datetime.strptime(option[10], '%c').timestamp():
-                c.execute("SELECT * FROM option_transaction WHERE option_id = %s", [option[0]])
-                current_option = c.fetchall()[0]
-                c.execute("DELETE FROM option_post WHERE option_id=%s", [option[0]])
-                c.execute(
-                    "INSERT INTO option_transaction VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                    [current_option])
-                db.commit()
+                try:
+                    c.execute("SELECT * FROM option_transaction WHERE option_id = %s", [option[0]])
+                    current_option = c.fetchall()[-1]
+                    c.execute("UPDATE option_post SET is_available='No' WHERE option_id=%s", [option[0]])
+                    c.execute(
+                        "UPDATE option_transaction SET is_available='Yes' "
+                        "WHERE option_id=%s AND holder_id=%s AND transaction_date=%s",
+                        [current_option[0], current_option[2], current_option[8]])
+                    db.commit()
+                except IndexError:
+                    c.execute("UPDATE option_post SET is_available='No' WHERE option_id=%s", [option[0]])
+                    db.commit()
         cash_update(users, current_cash, time_elapsed)
         option_update(current_time)
     # noinspection SqlWithoutWhere
