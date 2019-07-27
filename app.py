@@ -37,7 +37,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # change sslmode to allow for local run and add environment variable DATABASE_URL=postgresql://localhost/tradingterminal
-# or use the command below and comment the DATABASE_URL
+# or use the command below and comment next two lines
 # db = psycopg2.connect(user="", password="", host="127.0.0.1", port="5432", database="tradingterminal")
 DATABASE_URL = os.environ['DATABASE_URL']
 db = psycopg2.connect(DATABASE_URL, sslmode='allow')
@@ -392,7 +392,7 @@ def option_sell():
             strike_price = request.form.get("strike_price")
             option_type = request.form.get("option_type")
             num_of_shares = request.form.get("num_of_shares")
-            expiry = request.form.get("expiry")
+            expiry = int(request.form.get("days_to_expiry"))
             expiry_date = datetime.fromtimestamp(time.time() + expiry * 86400).strftime('%c')
             c.execute(
                 "INSERT INTO option_post(writer_id, holder_id, stock_symbol, option_type, option_price, strike_price,"
