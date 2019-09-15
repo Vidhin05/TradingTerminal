@@ -32,14 +32,6 @@
                             href="{{ url_for('quote') }}"><i
                             class="fas fa-window-maximize"></i><span>Quote</span></a></li>
                     <li class="nav-item" role="presentation"><a
-                            class="nav-link {% if  request.endpoint == "buy" %}active{% endif %}"
-                            href="{{ url_for('buy') }}"><i
-                            class="fas fa-window-maximize"></i><span>Stock Buy</span></a></li>
-                    <li class="nav-item" role="presentation"><a
-                            class="nav-link {% if  request.endpoint == "sell" %}active{% endif %}"
-                            href="{{ url_for('sell') }}"><i
-                            class="fas fa-window-maximize"></i><span>Stock Sell</span></a></li>
-                    <li class="nav-item" role="presentation"><a
                             class="nav-link {% if  request.endpoint == "history" %}active{% endif %}"
                             href="{{ url_for('history') }}"><i
                             class="fas fa-window-maximize"></i><span>History</span></a></li>

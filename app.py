@@ -36,9 +36,7 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# change sslmode to allow for local run and add environment variable DATABASE_URL=postgresql://localhost/tradingterminal
-# or use the command below and comment next two lines
-# db = psycopg2.connect(user="", password="", host="127.0.0.1", port="5432", database="tradingterminal")
+# for local run change sslmode to allow and add environment variable DATABASE_URL=postgresql://localhost/tradingterminal
 DATABASE_URL = os.environ['DATABASE_URL']
 db = psycopg2.connect(DATABASE_URL, sslmode='allow')
 c = db.cursor()
@@ -48,76 +46,265 @@ c = db.cursor()
 @login_required
 def index():
     refresh()
-    current_user = session["user_id"]
-    c.execute("SELECT username, cash FROM users WHERE id = %s", [current_user])
+
+    c.execute("SELECT username, cash FROM users WHERE id = %s", [session["user_id"]])
     username, current_cash = c.fetchall()[0]
 
     c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = %s GROUP BY symbol",
-              [current_user])
+              [session["user_id"]])
     available = c.fetchall()
 
     c.execute(
         "SELECT option_id, stock_symbol, option_type, strike_price, num_of_shares , expiry_date FROM option_transaction"
         " WHERE writer_id=%s GROUP BY option_id, stock_symbol, option_type, strike_price, num_of_shares , expiry_date",
-        [current_user])
+        [session["user_id"]])
     written_options = c.fetchall()
 
     c.execute(
         "SELECT option_id, stock_symbol, option_type, strike_price, num_of_shares , expiry_date, is_available"
-        " FROM option_post WHERE writer_id=%s GROUP BY option_id", [current_user])
+        " FROM option_post WHERE writer_id=%s GROUP BY option_id", [session["user_id"]])
     unsold_options = c.fetchall()
 
     c.execute("SELECT * FROM option_transaction WHERE holder_id=%s AND is_available='Yes'",
-              [current_user])
+              [session["user_id"]])
     available_options = c.fetchall()
 
     stocks_value = 0
     for stock in available:
         stocks_value += (stock[1] * lookup(stock[0])["price"])
-    c.execute("UPDATE users SET assets = %s WHERE id = %s", [stocks_value, current_user])
+    c.execute("UPDATE users SET assets = %s WHERE id = %s", [stocks_value, session["user_id"]])
     db.commit()
     return render_template("index.html", username=username, current_cash=current_cash, available=available,
                            lookup=lookup, usd=usd, stocks_value=stocks_value, available_options=available_options,
                            written_options=written_options, unsold_options=unsold_options)
 
 
-@app.route("/buy/", methods=["GET", "POST"])
+@app.route("/quote/", methods=["GET", "POST"])
+@login_required
+def quote():
+    """Get stock quote."""
+    refresh()
+
+    c.execute("SELECT username FROM users WHERE id = %s", [session["user_id"]])
+    username = c.fetchall()[0][0]
+    if request.method == "GET" and request.args.get('stock_symbol', None) is None:
+        return render_template("quote.html", username=username)
+    elif request.method == "POST" or request.args.get('stock_symbol', None) is not None:
+        if request.args.get('stock_symbol', None) is not None:
+            stock = lookup(request.args.get('stock_symbol', None))
+        else:
+            if not request.form.get("stock-symbol"):
+                return apology("Error", "Forgot to enter a stock")
+            stock = lookup(request.form.get("stock-symbol"))
+        if not stock:
+            return apology("ERROR", "INVALID STOCK")
+        df = stock_hist(stock['symbol'])
+        c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = %s AND symbol = %s GROUP BY symbol",
+                  [session["user_id"], stock["symbol"]])
+        available = c.fetchall()
+        # style.use('ggplot')
+        # style.use('seaborn-deep')
+        style.use('fivethirtyeight')
+        img = io.BytesIO()
+        df['Close'].plot()
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(img, format='png')
+        img.seek(0)
+        graph_url = base64.b64encode(img.getvalue()).decode()
+        plt.close()
+
+        c.execute("SELECT price, sum(shares), buy_sell FROM order_book where stock_symbol=%s "
+                  "group by price, buy_sell ORDER BY price",
+                  [stock['symbol']])
+        orders = c.fetchall()
+        order_book = []
+        total_buy = 0
+        total_sell = 0
+        for row in orders:
+            if row[2] == 'buy':
+                order_book.append([int(row[1]), row[0], '-'])
+                total_buy += row[1]
+            else:
+                order_book.append(['-', row[0], int(row[1])])
+                total_sell += row[1]
+
+        return render_template("quoted.html", stock=stock, url='data:image/png;base64,{}'.format(graph_url),
+                               username=username, order_book=order_book, total_buy=total_buy, total_sell=total_sell,
+                               available=available, stock_symbol=stock["symbol"], usd=usd)
+
+
+@app.route("/buy/", methods=["POST"])
 @login_required
 def buy():
-    refresh()
-    current_user = session["user_id"]
-    c.execute("SELECT username, cash FROM users WHERE id = %s", [current_user])
+    c.execute("SELECT username, cash FROM users WHERE id = %s", [session["user_id"]])
     username, current_cash = c.fetchall()[0]
     """Buy shares of stock."""
+
+    stock_symbol = request.args.get('stock_symbol', None)
+    price = float(request.form.get("price"))
+    try:
+        stock_quantity = int(request.form.get("stock-quantity"))
+
+    except ValueError:
+        return apology("ERROR", "ENTER QUANTITY IN WHOLE NUMBERS ONLY")
+    if not stock_symbol:
+        return apology("ERROR", "FORGOT STOCK SYMBOL")
+    elif not stock_quantity:
+        return apology("ERROR", "FORGOT DESIRED QUANTITY")
+
+    stock_info = lookup(stock_symbol)
+    if not stock_info:
+        return apology("ERROR", "INVALID STOCK")
+
+    transaction_cost = price * stock_quantity
+    if transaction_cost <= current_cash:
+        c.execute("INSERT INTO order_book(writer_id, stock_symbol, price, shares, buy_sell, order_time)"
+                  " VALUES(%s, %s, %s, %s,'buy', %s)",
+                  [session["user_id"], stock_info["symbol"], price, stock_quantity, time.strftime("%c")])
+        db.commit()
+        order_book_execute()
+    else:
+        return apology("ERROR", "INSUFFICIENT FUNDS")
+    return redirect(url_for("quote", stock_symbol=stock_symbol))
+
+
+@app.route("/sell/", methods=["POST"])
+@login_required
+def sell():
+    """Sell shares of stock."""
+
+    c.execute("SELECT username FROM users WHERE id = %s", [session["user_id"]])
+    username = c.fetchall()[0][0]
+
+    stock_symbol = request.args.get('stock_symbol', None)
+    price = float(request.form.get("price"))
+    c.execute("SELECT cash FROM users WHERE id = %s", [session["user_id"]])
+    current_cash = c.fetchall()[0][0]
+    c.execute("SELECT sum(quantity) FROM transactions WHERE user_id = %s AND symbol = %s",
+              [session["user_id"], stock_symbol])
+    stock_available = c.fetchall()
+    try:
+        stock_quantity = int(request.form.get("stock-quantity"))
+    except ValueError:
+        return apology("ERROR", "ENTER QUANTITY IN WHOLE NUMBERS ONLY")
+
+    if not stock_symbol:
+        return apology("ERROR", "Missing stock symbol")
+    if not stock_available[0][0]:
+        return apology("ERROR", "You don't own this security")
+
+    if stock_quantity <= stock_available[0][0]:
+        c.execute("INSERT INTO order_book(writer_id, stock_symbol, price, shares, buy_sell, order_time)"
+                  " VALUES(%s, %s, %s, %s,'sell', %s)",
+                  [session["user_id"], stock_symbol, price, stock_quantity, time.strftime("%c")])
+        db.commit()
+        order_book_execute()
+    else:
+        return apology("ERROR", "You don't own that much!")
+    return redirect(url_for("quote", stock_symbol=stock_symbol))
+
+
+@app.route("/option_buy/", methods=["GET", "POST"])
+@login_required
+def option_buy():
+    refresh()
+
+    c.execute("SELECT username, cash FROM users WHERE id = %s", [session["user_id"]])
+    username, current_cash = c.fetchall()[0]
+    c.execute("SELECT * FROM option_post WHERE is_available='Yes'")
+    options = c.fetchall()
     if request.method == "GET":
-        return render_template("buy.html", current_cash=usd(current_cash), username=username)
+        c.execute("SELECT * FROM option_post where is_available='Yes'")
+        transactions = c.fetchall()
+        return render_template("option_buy.html", transactions=transactions, username=username)
+
     elif request.method == "POST":
 
-        stock_symbol = request.form.get("stock-symbol")
-        try:
-            stock_quantity = int(request.form.get("stock-quantity"))
-        except ValueError:
-            return apology("ERROR", "ENTER QUANTITY IN WHOLE NUMBERS ONLY")
+        option_id = request.form.get("option_id")
 
-        if not stock_symbol:
-            return apology("ERROR", "FORGOT STOCK SYMBOL")
-        elif not stock_quantity:
-            return apology("ERROR", "FORGOT DESIRED QUANTITY")
+        if not option_id:
+            return apology("ERROR", "FORGOT OPTION ID")
 
-        stock_info = lookup(stock_symbol)
-        if not stock_info:
-            return apology("ERROR", "INVALID STOCK")
-        transaction_cost = stock_info["price"] * stock_quantity
-        if transaction_cost <= current_cash:
-            current_cash -= transaction_cost
-            c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, current_user])
-            c.execute("INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
-                      "VALUES(%s, %s, %s, %s, %s)",
-                      [current_user, stock_info["symbol"], stock_info["price"], stock_quantity, time.strftime("%c")])
+        elif int(option_id) in [row[0] for row in options]:
+            c.execute("SELECT * FROM option_post WHERE option_id = %s", [option_id])
+            option = c.fetchall()[0]
+
+            transaction_cost = option[5]
+            if transaction_cost <= current_cash:
+                current_cash -= transaction_cost
+                c.execute("SELECT cash FROM users WHERE id = %s", [option[2]])
+                seller_cash = c.fetchall()[0][0]
+                seller_cash += transaction_cost
+
+                c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, session["user_id"]])
+                c.execute("UPDATE users SET cash = %s WHERE id = %s", [seller_cash, option[2]])
+
+                c.execute(
+                    "INSERT INTO option_transaction VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Yes', %s)",
+                    [option[:8], time.strftime("%c"), option[-1]])
+
+                c.execute("DELETE FROM option_post WHERE option_id=%s", [option_id])
+                db.commit()
+                print("Transaction sent.")
+            else:
+                return apology("ERROR", "INSUFFICIENT FUNDS")
+            return redirect(url_for("index"))
+        else:
+            return apology("ERROR", "No such option")
+
+
+@app.route("/option_sell/", methods=["GET", "POST"])
+@login_required
+def option_sell():
+    refresh()
+
+    c.execute("SELECT username FROM users WHERE id = %s", [session["user_id"]])
+    username = c.fetchall()[0][0]
+    c.execute("SELECT * FROM option_transaction WHERE holder_id=%s AND is_available='Yes'",
+              [session["user_id"]])
+    transactions = c.fetchall()
+    if request.method == "GET":
+        return render_template("option_sell.html", transactions=transactions, username=username)
+
+    elif request.method == "POST":
+
+        option_id = request.form.get("option_id")
+        stock_symbol = request.form.get("stock_symbol")
+        option_price = request.form.get("option_price")
+
+        if not option_id:
+            strike_price = request.form.get("strike_price")
+            option_type = request.form.get("option_type")
+            num_of_shares = request.form.get("num_of_shares")
+            expiry = int(request.form.get("days_to_expiry"))
+            expiry_date = datetime.fromtimestamp(time.time() + expiry * 86400).strftime('%c')
+            c.execute(
+                "INSERT INTO option_post(writer_id, holder_id, stock_symbol, option_type, option_price, strike_price,"
+                " num_of_shares, transaction_date,is_available,expiry_date) "
+                "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                [session["user_id"], session["user_id"], stock_symbol, option_type, option_price, strike_price,
+                 num_of_shares,
+                 time.strftime("%c"), 'Yes', expiry_date])
+            db.commit()
+
+        elif int(option_id) in [row[0] for row in transactions]:
+            writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, expiry_date = \
+                c.execute(
+                    "SELECT writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, expiry_date"
+                    "FROM option_transaction WHERE option_id = %s", [option_id]).fetchall()[0]
+
+            c.execute("UPDATE option_transaction SET is_available = %s WHERE holder_id = %s and option_id = %s",
+                      ["No", holder_id, option_id])
+            c.execute(
+                "INSERT INTO option_post VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                [option_id, writer_id, session["user_id"], stock_symbol, option_type, option_price, strike_price,
+                 num_of_shares, time.strftime("%c"), 'Yes', expiry_date])
             db.commit()
             print("Transaction sent.")
         else:
-            return apology("ERROR", "INSUFFICIENT FUNDS")
+            return apology("ERROR", "No such option")
+
         return redirect(url_for("index"))
 
 
@@ -126,13 +313,13 @@ def buy():
 def history():
     refresh()
     """Show history of transactions."""
-    current_user = session["user_id"]
-    c.execute("SELECT username FROM users WHERE id = %s", [current_user])
+
+    c.execute("SELECT username FROM users WHERE id = %s", [session["user_id"]])
     username = c.fetchall()[0][0]
-    c.execute("SELECT * FROM transactions WHERE user_id = %s", [current_user])
+    c.execute("SELECT * FROM transactions WHERE user_id = %s", [session["user_id"]])
     transactions = c.fetchall()
     c.execute("SELECT * FROM option_transaction WHERE holder_id = %s AND is_available = 'Yes'",
-              [current_user])
+              [session["user_id"]])
     option_transactions = c.fetchall()
     return render_template("history.html", transactions=transactions, option_transactions=option_transactions,
                            lookup=lookup, usd=usd, username=username)
@@ -142,8 +329,8 @@ def history():
 @login_required
 def leaderboard():
     refresh()
-    current_user = session["user_id"]
-    c.execute("SELECT username FROM users WHERE id = %s", [current_user])
+
+    c.execute("SELECT username FROM users WHERE id = %s", [session["user_id"]])
     username = c.fetchall()[0][0]
     c.execute("SELECT username, cash, assets FROM users ORDER BY cash + assets DESC")
     leaders = c.fetchall()
@@ -195,38 +382,6 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route("/quote/", methods=["GET", "POST"])
-@login_required
-def quote():
-    """Get stock quote."""
-    current_user = session["user_id"]
-    c.execute("SELECT username FROM users WHERE id = %s", [current_user])
-    username = c.fetchall()[0][0]
-    if request.method == "GET":
-        return render_template("quote.html", username=username)
-    elif request.method == "POST":
-        if not request.form.get("stock-symbol"):
-            return apology("Error", "Forgot to enter a stock")
-        stock = lookup(request.form.get("stock-symbol"))
-        df = stock_hist(stock['symbol'])
-
-        # style.use('ggplot')
-        # style.use('seaborn-deep')
-        style.use('fivethirtyeight')
-        img = io.BytesIO()
-        df['Close'].plot()
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        plt.savefig(img, format='png')
-        img.seek(0)
-        graph_url = base64.b64encode(img.getvalue()).decode()
-        plt.close()
-        if not stock:
-            return apology("ERROR", "INVALID STOCK")
-        return render_template("quoted.html", stock=stock, url='data:image/png;base64,{}'.format(graph_url),
-                               username=username)
-
-
 @app.route("/register/", methods=["GET", "POST"])
 def register():
     """Register user."""
@@ -268,158 +423,6 @@ def register():
                 return apology("Error", "Username taken")
         else:
             return apology("Passwords don't match")
-
-
-@app.route("/sell/", methods=["GET", "POST"])
-@login_required
-def sell():
-    """Sell shares of stock."""
-    refresh()
-    current_user = session["user_id"]
-    c.execute("SELECT username FROM users WHERE id = %s", [current_user])
-    username = c.fetchall()[0][0]
-    if request.method == "GET":
-        c.execute("SELECT symbol, sum(quantity) FROM transactions WHERE user_id = %s GROUP BY symbol",
-                  [session["user_id"]])
-        available = c.fetchall()
-        return render_template("sell.html", available=available, username=username)
-    elif request.method == "POST":
-
-        current_user = session["user_id"]
-        stock_symbol = request.form.get("stock-symbol")
-        c.execute("SELECT cash FROM users WHERE id = %s", [current_user])
-        current_cash = c.fetchall()[0][0]
-        c.execute("SELECT sum(quantity) FROM transactions WHERE user_id = %s AND symbol = %s",
-                  [current_user, stock_symbol])
-        stock_available = c.fetchall()
-        try:
-            stock_quantity = int(request.form.get("stock-quantity"))
-        except ValueError:
-            return apology("ERROR", "ENTER QUANTITY IN WHOLE NUMBERS ONLY")
-
-        if not stock_symbol:
-            return apology("ERROR", "Missing stock symbol")
-        if not stock_available[0][0]:
-            return apology("ERROR", "You don't own this security")
-
-        if stock_quantity <= stock_available[0][0]:
-            print("transaction possible")
-            stock_info = lookup(stock_symbol)
-            if not stock_info:
-                return apology("ERROR", "INVALID STOCK")
-            current_cash += stock_info["price"] * stock_quantity
-            c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, current_user])
-            c.execute(
-                "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
-                "VALUES(%s, %s, %s, %s, %s)",
-                [current_user, stock_info["symbol"], stock_info["price"], 0 - stock_quantity, time.strftime("%c")])
-            db.commit()
-            print("Transaction sent.")
-        else:
-            return apology("ERROR", "You don't own that much!")
-        return redirect(url_for("index"))
-
-
-@app.route("/option_buy/", methods=["GET", "POST"])
-@login_required
-def option_buy():
-    refresh()
-    current_user = session["user_id"]
-    c.execute("SELECT username, cash FROM users WHERE id = %s", [current_user])
-    username, current_cash = c.fetchall()[0]
-    c.execute("SELECT * FROM option_post WHERE is_available='Yes'")
-    options = c.fetchall()
-    if request.method == "GET":
-        c.execute("SELECT * FROM option_post where is_available='Yes'")
-        transactions = c.fetchall()
-        return render_template("option_buy.html", transactions=transactions, username=username)
-
-    elif request.method == "POST":
-
-        option_id = request.form.get("option_id")
-
-        if not option_id:
-            return apology("ERROR", "FORGOT OPTION ID")
-
-        elif int(option_id) in [row[0] for row in options]:
-            c.execute("SELECT * FROM option_post WHERE option_id = %s", [option_id])
-            option = c.fetchall()[0]
-
-            transaction_cost = option[5]
-            if transaction_cost <= current_cash:
-                current_cash -= transaction_cost
-                c.execute("SELECT cash FROM users WHERE id = %s", [option[2]])
-                seller_cash = c.fetchall()[0][0]
-                seller_cash += transaction_cost
-
-                c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, current_user])
-                c.execute("UPDATE users SET cash = %s WHERE id = %s", [seller_cash, option[2]])
-
-                c.execute(
-                    "INSERT INTO option_transaction VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Yes', %s)",
-                    [option[:8], time.strftime("%c"), option[-1]])
-
-                c.execute("DELETE FROM option_post WHERE option_id=%s", [option_id])
-                db.commit()
-                print("Transaction sent.")
-            else:
-                return apology("ERROR", "INSUFFICIENT FUNDS")
-            return redirect(url_for("index"))
-        else:
-            return apology("ERROR", "No such option")
-
-
-@app.route("/option_sell/", methods=["GET", "POST"])
-@login_required
-def option_sell():
-    refresh()
-    current_user = session["user_id"]
-    c.execute("SELECT username FROM users WHERE id = %s", [current_user])
-    username = c.fetchall()[0][0]
-    c.execute("SELECT * FROM option_transaction WHERE holder_id=%s AND is_available='Yes'",
-              [current_user])
-    transactions = c.fetchall()
-    if request.method == "GET":
-        return render_template("option_sell.html", transactions=transactions, username=username)
-
-    elif request.method == "POST":
-
-        option_id = request.form.get("option_id")
-        stock_symbol = request.form.get("stock_symbol")
-        option_price = request.form.get("option_price")
-
-        if not option_id:
-            strike_price = request.form.get("strike_price")
-            option_type = request.form.get("option_type")
-            num_of_shares = request.form.get("num_of_shares")
-            expiry = int(request.form.get("days_to_expiry"))
-            expiry_date = datetime.fromtimestamp(time.time() + expiry * 86400).strftime('%c')
-            c.execute(
-                "INSERT INTO option_post(writer_id, holder_id, stock_symbol, option_type, option_price, strike_price,"
-                " num_of_shares, transaction_date,is_available,expiry_date) "
-                "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                [current_user, current_user, stock_symbol, option_type, option_price, strike_price, num_of_shares,
-                 time.strftime("%c"), 'Yes', expiry_date])
-            db.commit()
-
-        elif int(option_id) in [row[0] for row in transactions]:
-            writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, expiry_date = \
-                c.execute(
-                    "SELECT writer_id, holder_id, stock_symbol, option_type, strike_price, num_of_shares, expiry_date"
-                    "FROM option_transaction WHERE option_id = %s", [option_id]).fetchall()[0]
-
-            c.execute("UPDATE option_transaction SET is_available = %s WHERE holder_id = %s and option_id = %s",
-                      ["No", holder_id, option_id])
-            c.execute(
-                "INSERT INTO option_post VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                [option_id, writer_id, current_user, stock_symbol, option_type, option_price, strike_price,
-                 num_of_shares, time.strftime("%c"), 'Yes', expiry_date])
-            db.commit()
-            print("Transaction sent.")
-        else:
-            return apology("ERROR", "No such option")
-
-        return redirect(url_for("index"))
 
 
 # noinspection PyUnusedLocal
@@ -553,6 +556,39 @@ def option_update(current_time):
                     c.execute("UPDATE option_transaction SET is_available='No' WHERE option_id = %s ", [option[0]])
                     db.commit()
                     print("Transaction sent.")
+
+
+def order_book_execute():
+    return 0
+
+
+# buy
+#     transaction_cost = stock_info["price"] * stock_quantity
+#     if transaction_cost <= current_cash:
+#         current_cash -= transaction_cost
+#         c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, session["user_id"]])
+#         c.execute("INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
+#                   "VALUES(%s, %s, %s, %s, %s)",
+#                   [session["user_id"], stock_info["symbol"], stock_info["price"], stock_quantity, time.strftime("%c")])
+#         db.commit()
+#         print("Transaction sent.")
+#
+# sell
+#         if stock_quantity <= stock_available[0][0]:
+#             print("transaction possible")
+#             stock_info = lookup(stock_symbol)
+#             if not stock_info:
+#                 return apology("ERROR", "INVALID STOCK")
+#             current_cash += stock_info["price"] * stock_quantity
+#             c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, session["user_id"]])
+#             c.execute(
+#                 "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
+#                 "VALUES(%s, %s, %s, %s, %s)",
+#                 [session["user_id"], stock_info["symbol"], stock_info["price"], 0 - stock_quantity, time.strftime("%c")])
+#             db.commit()
+#             print("Transaction sent.")
+#         else:
+#             return apology("ERROR", "You don't own that much!")
 
 
 if __name__ == "__main__":

@@ -45,7 +45,7 @@
                         <div class="row align-items-center no-gutters">
                             <div class="col mr-2">
                                 <div class="text-uppercase text-success font-weight-bold text-xs mb-1">
-                                    <span>Price</span>
+                                    <span>Market Price</span>
                                 </div>
                                 <div class="text-dark font-weight-bold h5 mb-0"><span>{{ stock.price }}</span>
                                 </div>
@@ -72,7 +72,134 @@
                     </div>
                 </div>
             </div>
+            <div class="col-xl-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <p class="text-primary m-0 font-weight-bold">Stock Order Book</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive table mt-2" id="dataTable" role="grid"
+                             aria-describedby="dataTable_info">
+                            <table class="table dataTable my-0" id="dataTable">
+                                <thead>
+                                <tr>
+                                    <th>BUY QTY</th>
+                                    <th>PRICE</th>
+                                    <th>SELL QTY</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for row in order_book %}
+                                    <tr>
+                                        <td>{{ row[0] }}</td>
+                                        <td>{{ usd(row[1]) }}</td>
+                                        <td>{{ row[2] }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td><strong>  {{ total_buy }}   </strong></td>
+                                    <td><strong>Total</strong></td>
+                                    <td><strong>  {{ total_sell }}   </strong></td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <!-- End: Chart -->
+
+        <div class="row">
+            <div class="col-xl-4">
+
+                <div class="card shadow" style="margin-top: 10px;">
+                    <div class="card-header py-3">
+                        <p class="text-primary m-0 font-weight-bold">Current Holding</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive table mt-2" id="dataTable" role="grid"
+                             aria-describedby="dataTable_info">
+                            <table class="table dataTable my-0" id="dataTable">
+                                <thead>
+                                <tr>
+                                    <th>Stock Symbol</th>
+                                    <th>Units</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for row in available %}
+                                    <tr>
+                                        <td>{{ row[0] }}</td>
+                                        <td>{{ row[1] }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td><strong>Symbol</strong></td>
+                                    <td><strong>Units</strong></td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="p-2">
+                    <h4 class="text-center text-dark mb-4">Buy Stock</h4>
+                    <div class="text-center"></div>
+                    <form class="user" action="{{ url_for('buy', stock_symbol=stock_symbol) }}" method="post">
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input class="form-control form-control-user"
+                                       type="text"
+                                       placeholder="Price"
+                                       name="price">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input class="form-control form-control-user"
+                                       type="text"
+                                       placeholder="Quantity"
+                                       name="stock-quantity">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-block text-white btn-user" type="submit">Buy</button>
+                        <hr>
+                    </form>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="p-2">
+                    <h4 class="text-center text-dark mb-4">Sell Stock</h4>
+                    <div class="text-center"></div>
+                    <form class="user" action="{{ url_for('sell', stock_symbol=stock_symbol) }}" method="post">
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input class="form-control form-control-user"
+                                       type="text"
+                                       placeholder="Price"
+                                       name="price">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input class="form-control form-control-user"
+                                       type="text"
+                                       placeholder="Quantity"
+                                       name="stock-quantity">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-block text-white btn-user" type="submit">Sell</button>
+                        <hr>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}
