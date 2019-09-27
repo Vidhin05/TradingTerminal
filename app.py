@@ -114,7 +114,7 @@ def quote():
         graph_url = base64.b64encode(img.getvalue()).decode()
         plt.close()
 
-        c.execute("SELECT price, sum(shares), buy_sell FROM order_book where stock_symbol=%s "
+        c.execute("SELECT price, sum(shares), buy_sell FROM order_book where stock_symbol=%s and shares>0 "
                   "group by price, buy_sell ORDER BY price",
                   [stock['symbol']])
         orders = c.fetchall()
@@ -163,7 +163,9 @@ def buy():
                   " VALUES(%s, %s, %s, %s,'buy', %s)",
                   [session["user_id"], stock_info["symbol"], price, stock_quantity, time.strftime("%c")])
         db.commit()
-        order_book_execute()
+        c.execute("SELECT last_value FROM order_book_order_id_seq;")
+        order_id = c.fetchall()[0][0]
+        order_book_execute(order_id)
     else:
         return apology("ERROR", "INSUFFICIENT FUNDS")
     return redirect(url_for("quote", stock_symbol=stock_symbol))
@@ -173,14 +175,8 @@ def buy():
 @login_required
 def sell():
     """Sell shares of stock."""
-
-    c.execute("SELECT username FROM users WHERE id = %s", [session["user_id"]])
-    username = c.fetchall()[0][0]
-
     stock_symbol = request.args.get('stock_symbol', None)
     price = float(request.form.get("price"))
-    c.execute("SELECT cash FROM users WHERE id = %s", [session["user_id"]])
-    current_cash = c.fetchall()[0][0]
     c.execute("SELECT sum(quantity) FROM transactions WHERE user_id = %s AND symbol = %s",
               [session["user_id"], stock_symbol])
     stock_available = c.fetchall()
@@ -198,8 +194,10 @@ def sell():
         c.execute("INSERT INTO order_book(writer_id, stock_symbol, price, shares, buy_sell, order_time)"
                   " VALUES(%s, %s, %s, %s,'sell', %s)",
                   [session["user_id"], stock_symbol, price, stock_quantity, time.strftime("%c")])
+        c.execute("SELECT last_value FROM order_book_order_id_seq;")
+        order_id = c.fetchall()[0][0]
         db.commit()
-        order_book_execute()
+        order_book_execute(order_id)
     else:
         return apology("ERROR", "You don't own that much!")
     return redirect(url_for("quote", stock_symbol=stock_symbol))
@@ -558,37 +556,69 @@ def option_update(current_time):
                     print("Transaction sent.")
 
 
-def order_book_execute():
-    return 0
+def order_book_execute(order_id):
+    c.execute("SELECT * FROM order_book where order_id=%s", [order_id])
+    _, writer_id, stock_symbol, price, shares, buy_sell, _ = c.fetchall()[0]
 
+    if buy_sell == "buy":
+        c.execute("SELECT order_id, writer_id, price, shares FROM order_book where stock_symbol=%s "
+                  "AND buy_sell='sell'  ORDER BY price", [stock_symbol])
+        orders = c.fetchall()
 
-# buy
-#     transaction_cost = stock_info["price"] * stock_quantity
-#     if transaction_cost <= current_cash:
-#         current_cash -= transaction_cost
-#         c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, session["user_id"]])
-#         c.execute("INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
-#                   "VALUES(%s, %s, %s, %s, %s)",
-#                   [session["user_id"], stock_info["symbol"], stock_info["price"], stock_quantity, time.strftime("%c")])
-#         db.commit()
-#         print("Transaction sent.")
-#
-# sell
-#         if stock_quantity <= stock_available[0][0]:
-#             print("transaction possible")
-#             stock_info = lookup(stock_symbol)
-#             if not stock_info:
-#                 return apology("ERROR", "INVALID STOCK")
-#             current_cash += stock_info["price"] * stock_quantity
-#             c.execute("UPDATE users SET cash = %s WHERE id = %s", [current_cash, session["user_id"]])
-#             c.execute(
-#                 "INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
-#                 "VALUES(%s, %s, %s, %s, %s)",
-#                 [session["user_id"], stock_info["symbol"], stock_info["price"], 0 - stock_quantity, time.strftime("%c")])
-#             db.commit()
-#             print("Transaction sent.")
-#         else:
-#             return apology("ERROR", "You don't own that much!")
+        i = 0
+        while shares > 0 and price >= orders[i][2]:
+            exchanged = min(orders[i][3], shares)
+            shares -= exchanged
+            transaction_cost = exchanged * orders[i][2]
+
+            c.execute("SELECT cash FROM users WHERE id = %s", [writer_id])
+            buyer_cash = c.fetchall()[0][0]
+            buyer_cash -= transaction_cost
+            c.execute("SELECT cash FROM users WHERE id = %s", [orders[i][1]])
+            seller_cash = c.fetchall()[0][0]
+            seller_cash += transaction_cost
+            c.execute("UPDATE users SET cash = %s WHERE id = %s", [buyer_cash, writer_id])
+            c.execute("UPDATE users SET cash = %s WHERE id = %s", [seller_cash, orders[i][1]])
+            c.execute("UPDATE order_book SET shares = %s WHERE order_id = %s", [shares, order_id])
+            c.execute("UPDATE order_book SET shares = %s WHERE order_id = %s", [orders[i][3] - exchanged, orders[i][0]])
+            c.execute("INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
+                      "VALUES(%s, %s, %s, %s, %s)",
+                      [writer_id, stock_symbol, orders[i][2], exchanged, time.strftime("%c")])
+            c.execute("INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
+                      "VALUES(%s, %s, %s, %s, %s)",
+                      [orders[i][1], stock_symbol, orders[i][2], -exchanged, time.strftime("%c")])
+            db.commit()
+            i += 1
+
+    elif buy_sell == "sell":
+        c.execute("SELECT order_id, writer_id, price, shares FROM order_book where stock_symbol=%s "
+                  "AND buy_sell='buy'  ORDER BY price DESC", [stock_symbol])
+        orders = c.fetchall()
+
+        i = 0
+        while shares > 0 and price <= orders[i][2]:
+            exchanged = min(orders[i][3], shares)
+            shares -= exchanged
+            transaction_cost = exchanged * price
+
+            c.execute("SELECT cash FROM users WHERE id = %s", [orders[i][1]])
+            buyer_cash = c.fetchall()[0][0]
+            buyer_cash -= transaction_cost
+            c.execute("SELECT cash FROM users WHERE id = %s", [writer_id])
+            seller_cash = c.fetchall()[0][0]
+            seller_cash += transaction_cost
+            c.execute("UPDATE users SET cash = %s WHERE id = %s", [buyer_cash, writer_id])
+            c.execute("UPDATE users SET cash = %s WHERE id = %s", [seller_cash, orders[i][1]])
+            c.execute("UPDATE order_book SET shares = %s WHERE order_id = %s", [shares, order_id])
+            c.execute("UPDATE order_book SET shares = %s WHERE order_id = %s", [orders[i][3] - exchanged, orders[i][0]])
+            c.execute("INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
+                      "VALUES(%s, %s, %s, %s, %s)",
+                      [writer_id, stock_symbol, price, -exchanged, time.strftime("%c")])
+            c.execute("INSERT INTO transactions(user_id, symbol, price, quantity, transaction_date)"
+                      "VALUES(%s, %s, %s, %s, %s)",
+                      [orders[i][1], stock_symbol, price, exchanged, time.strftime("%c")])
+            db.commit()
+            i += 1
 
 
 if __name__ == "__main__":
