@@ -40,13 +40,9 @@
                             href="{{ url_for('leaderboard') }}"><i
                             class="fas fa-window-maximize"></i><span>Leaderboard</span></a></li>
                     <li class="nav-item" role="presentation"><a
-                            class="nav-link {% if  request.endpoint == "option_buy" %}active{% endif %}"
-                            href="{{ url_for('option_buy') }}"><i
-                            class="fas fa-window-maximize"></i><span>Option Buy</span></a></li>
-                    <li class="nav-item" role="presentation"><a
-                            class="nav-link {% if  request.endpoint == "option_sell" %}active{% endif %}"
-                            href="{{ url_for('option_sell') }}"><i
-                            class="fas fa-window-maximize"></i><span>Option Sell</span></a></li>
+                            class="nav-link {% if  request.endpoint == "option_quote" %}active{% endif %}"
+                            href="{{ url_for('option_quote') }}"><i
+                            class="fas fa-window-maximize"></i><span>Option Quote</span></a></li>
                 {% else %}
                     <li class="nav-item" role="presentation"><a
                             class="nav-link" href="{{ url_for('register') }}"><i

@@ -1,0 +1,349 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Stock Option Quote
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid">
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">Stock Option Quote</h3>
+        </div>
+        <div class="row">
+            <div class="col-md-6 col-xl-4 mb-4">
+                <div class="card shadow border-left-primary py-2">
+                    <div class="card-body">
+                        <div class="row align-items-center no-gutters">
+                            <div class="col-xl-12 mr-2">
+                                <div class="text-uppercase text-primary font-weight-bold text-xs mb-1"><span>Stock Symbol</span>
+                                </div>
+                                <div class="text-dark font-weight-bold h5 mb-0"><span>{{ stock.symbol }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4 mb-4">
+                <div class="card shadow border-left-primary py-2">
+                    <div class="card-body">
+                        <div class="row align-items-center no-gutters">
+                            <div class="col-xl-12 mr-2">
+                                <div class="text-uppercase text-primary font-weight-bold text-xs mb-1">
+                                    <span>Stock</span>
+                                </div>
+                                <div class="text-dark font-weight-bold h5 mb-0"><span>{{ stock.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4 mb-4">
+                <div class="card shadow border-left-success py-2">
+                    <div class="card-body">
+                        <div class="row align-items-center no-gutters">
+                            <div class="col mr-2">
+                                <div class="text-uppercase text-success font-weight-bold text-xs mb-1">
+                                    <span>Market Price</span>
+                                </div>
+                                <div class="text-dark font-weight-bold h5 mb-0"><span>{{ stock.price }}</span>
+                                </div>
+                            </div>
+                            <div class="col-auto"><i class="fas fa-dollar-sign fa-2x text-gray-300"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Start: Chart -->
+        <div class="row">
+            <div class="col-xl-5">
+                <div class="card shadow mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="text-primary font-weight-bold m-0">Intraday TimeSeries {{ stock.name }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-area" style="height: 382px;"><img src="{{ url }}" height="764"
+                                                                            width="900"
+                                                                            style="display: block; height: 100%; width: 100%;"
+                                                                            alt="Intraday TimeSeries {{ stock.name }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-7">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <p class="text-primary m-0 font-weight-bold">Stock Option Chain</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive table mt-2" id="dataTable" role="grid"
+                             aria-describedby="dataTable_info">
+                            <table class="table dataTable my-0" id="dataTable">
+                                <thead>
+                                <tr>
+                                    <th colspan="3" style="text-align:center">CALL</th>
+                                    <th colspan="2" style="text-align:center"></th>
+                                    <th colspan="3" style="text-align:center">PUT</th>
+                                </tr>
+                                </thead>
+                                <thead>
+                                <tr>
+                                    <th>BUY QTY</th>
+                                    <th>OPTION PRICE</th>
+                                    <th>SELL QTY</th>
+
+                                    <th>STRIKE PRICE</th>
+                                    <th>EXPIRY DATE</th>
+
+                                    <th>BUY QTY</th>
+                                    <th>OPTION PRICE</th>
+                                    <th>SELL QTY</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for row in option_order_book %}
+                                    <tr>
+                                        <td>{{ row[0] }}</td>
+                                        <td>{{ row[1] }}</td>
+                                        <td>{{ row[2] }}</td>
+
+                                        <td>{{ row[3] }}</td>
+                                        <td>{{ row[4] }}</td>
+
+                                        <td>{{ row[5] }}</td>
+                                        <td>{{ row[6] }}</td>
+                                        <td>{{ row[7] }}</td>
+
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td><strong>  {{ total_call_buy }}   </strong></td>
+                                    <td><strong>Total</strong></td>
+                                    <td><strong>  {{ total_call_sell }}   </strong></td>
+
+                                    <td colspan="2"><strong></strong></td>
+
+                                    <td><strong>  {{ total_put_buy }}   </strong></td>
+                                    <td><strong>Total</strong></td>
+                                    <td><strong>  {{ total_put_sell }}   </strong></td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End: Chart -->
+
+        <div class="row">
+            <div class="col-xl-6">
+
+                <div class="card shadow" style="margin-top: 10px;">
+                    <div class="card-header py-3">
+                        <p class="text-primary m-0 font-weight-bold">Current Option Holding</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive table mt-2" id="dataTable" role="grid"
+                             aria-describedby="dataTable_info">
+                            <table class="table dataTable my-0" id="dataTable">
+                                <thead>
+                                <tr>
+                                    <th>Option ID</th>
+                                    <th>Writer ID</th>
+                                    <th>Holder ID</th>
+                                    <th>Option Type</th>
+                                    <th>Option Price</th>
+                                    <th>Strike Price</th>
+                                    <th>Units</th>
+                                    <th>Expiry Date</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for option_transaction in transactions %}
+                                    <tr>
+                                        <td>{{ option_transaction[0] }}</td>
+                                        <td>{{ option_transaction[1] }}</td>
+                                        <td>{{ option_transaction[2] }}</td>
+                                        <td>{{ option_transaction[3] }}</td>
+                                        <td>{{ option_transaction[4] }}</td>
+                                        <td>{{ option_transaction[5] }}</td>
+                                        <td>{{ option_transaction[6] }}</td>
+                                        <td>{{ option_transaction[7] }}</td>
+                                    </tr>
+                                {% endfor %}
+
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td><strong>Option ID</strong></td>
+                                    <td><strong>Writer ID</strong></td>
+                                    <td><strong>Holder ID</strong></td>
+                                    <td><strong>Option Type</strong><br></td>
+                                    <td><strong>Option Price</strong></td>
+                                    <td><strong>Strike Price</strong></td>
+                                    <td><strong>Units</strong></td>
+                                    <td><strong>Expiry Date</strong></td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3">
+                <div class="p-2">
+                    <h4 class="text-center text-dark mb-4">Buy Stock Option</h4>
+                    <div class="text-center"></div>
+                    <form class="user" action="{{ url_for('option_buy', stock_symbol=stock_symbol) }}" method="post">
+
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input class="form-control form-control-user"
+                                       type="text"
+                                       placeholder="CALL/PUT"
+                                       name="option_type">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input class="form-control form-control-user"
+                                       type="text"
+                                       placeholder="Strike Price"
+                                       name="strike_price">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input class="form-control form-control-user"
+                                       type="text"
+                                       placeholder="Option Price"
+                                       name="option_price">
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input class="form-control form-control-user"
+                                       type="number"
+                                       placeholder="Option Quantity"
+                                       name="shares">
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <select class="form-control form-control-user" id="expiry_date_buy"
+                                        name="expiry_date_buy">
+                                    {% for row in option_dates %}
+                                        <option value="{{ row }}">{{ row }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-block text-white btn-user" type="submit">Buy</button>
+                        <hr>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-xl-3">
+                <div class="p-2">
+                    <h4 class="text-center text-dark mb-4">Sell Option</h4>
+                    <div class="text-center"></div>
+                    <form class="user" action="{{ url_for('option_sell', stock_symbol=stock_symbol) }}" method="post">
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input
+                                        class="form-control form-control-user"
+                                        type="text" id="option_id"
+                                        placeholder="Option ID" name="option_id"
+                                        onkeyup="myScript()">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input
+                                        class="form-control form-control-user"
+                                        type="text" id="option_type"
+                                        placeholder="PUT/CALL" name="option_type" onkeyup="myScript2()">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input
+                                        class="form-control form-control-user"
+                                        type="text" id="strike_price"
+                                        placeholder="Strike Price"
+                                        name="strike_price" onkeyup="myScript2()">
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input
+                                        class="form-control form-control-user"
+                                        type="text" id="option_price"
+                                        placeholder="Option Price"
+                                        name="option_price" onkeyup="myScript2()">
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <input class="form-control form-control-user"
+                                       type="number"
+                                       placeholder="Option Quantity"
+                                       name="shares" id="shares">
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="col-sm-6 col-xl-12 mb-3 mb-sm-0">
+                                <select class="form-control form-control-user" id="expiry_date_sell"
+                                        name="expiry_date_sell">
+                                    {% for row in option_dates %}
+                                        <option value="{{ row }}">{{ row }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-block text-white btn-user" type="submit">Sell</button>
+                        <hr>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function myScript() {
+            if ($('#option_id').val().trim().length !== 0) {
+                $('#strike_price').hide();
+                $('#option_type').hide();
+                $('#shares').hide();
+                $('#expiry_date_sell').hide();
+            } else {
+                $('#strike_price').show();
+                $('#option_type').show();
+                $('#shares').show();
+                $('#expiry_date_sell').show();
+            }
+        }
+
+        function myScript2() {
+            if ($('#option_type').val().trim().length !== 0 ||
+                $('#strike_price').val().trim().length !== 0 ||
+                $('#shares').val().trim().length !== 0 ||
+                $('#expiry_date_sell').val().trim().length !== 0) {
+                $('#option_id').hide();
+            } else {
+                $('#option_id').show();
+            }
+        }
+    </script>
+{% endblock %}
